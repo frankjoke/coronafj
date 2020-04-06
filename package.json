@@ -1,6 +1,11 @@
 {
   "name": "coronafj",
   "version": "0.1.0",
+  "author": {
+    "name": "frankjoke",
+    "email": "frankjoke@hotmail.com"
+  },
+  "description": "Takes ministry data and calculates some development trends",
   "private": true,
   "scripts": {
     "serve": "vue-cli-service serve",
@@ -13,6 +18,8 @@
   },
   "main": "background.js",
   "dependencies": {
+    "@seregpie/vue-chart": "^1.0.1",
+    "axios": "^0.19.2",
     "vue": "^2.6.11",
     "vuetify": "^2.2.18"
   },
@@ -21,7 +28,8 @@
     "@vue/cli-service": "^4.2.3",
     "@vue/eslint-config-prettier": "^6.0.0",
     "babel-eslint": "^10.1.0",
-    "electron": "6.0.0",
+    "electron": "8.1.1",
+    "electron-builder-squirrel-windows": "^22.4.1",
     "eslint": "^6.8.0",
     "eslint-plugin-prettier": "^3.1.2",
     "eslint-plugin-vue": "^6.2.2",
@@ -32,5 +40,23 @@
     "vue-cli-plugin-vuetify": "^2.0.5",
     "vue-template-compiler": "^2.6.11",
     "vuetify-loader": "^1.4.3"
+  },
+  "eslintConfig": {
+    "root": true,
+    "env": {
+      "browser": true,
+      "node": true
+    },
+    "extends": [
+      "plugin:vue/essential",
+      "@vue/prettier"
+    ],
+    "rules": {
+      "double": 0,
+      "isable-next-line": 0
+    },
+    "parserOptions": {
+      "parser": "babel-eslint"
+    }
   }
 }
