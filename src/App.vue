@@ -124,6 +124,8 @@
         hide-default-footer
         class="elevation-2"
         :items-per-page="100"
+        must-sort
+        :sort-by="['sickPerMillion']"
       >
         <template v-slot:item="{ item, headers }">
           <tr class="alternate">
