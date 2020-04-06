@@ -77,7 +77,11 @@
         <template v-slot:item="{ item, headers }">
           <tr class="alternate">
             <td
-              @click="activeCountry =  countryCodes.filter(i => i.CountryCode == item.alpha2Code)[0]"
+              @click="
+                activeCountry = countryCodes.filter(
+                  (i) => i.CountryCode == item.alpha2Code
+                )[0]
+              "
               v-for="column in headers"
               :key="column.value"
               :class="
@@ -91,36 +95,35 @@
                   : item[column.value]
               }}
             </td>
-          </tr></template
-        >
+          </tr>
+        </template>
       </v-data-table>
       <v-divider class="my-1" />
-      <div class="subtitle-2">{{ ccountry.alt }}:</div>
-      <div class="body-2">
-        Total confirmed: {{ current.confirmed | nformat("?;") }}, Total
-        recovered: {{ current.recovered | nformat("?;") }}, Total deaths:
-        {{ current.deaths | nformat("?;") }},
-        <br />
-        Total cases: {{ current.totalSick | nformat("?;") }}, Recovery rate:
-        {{ current.recovRate | nformat("?2;%") }}, Death rate:
-        {{ current.deathRate | nformat("?2;%") }}, Death/Million:
-        {{ current.deathPerMillion | nformat("?2;") }},
-        <br />
-        Double in days last:
-        {{ current.double1 | nformat("?2;") }} average3:
-        {{ current.double3 | nformat("?2;") }}, New rate last:
-        {{ current.pconf | nformat("?2;%") }} average3:
-        {{ current.pconf3 | nformat("?2;%") }},
-        <br />
-        New to recovered+death rate average3:
-        {{ current.confrate | nformat("?1;%") }}, Population:
-        {{ current.population | nformat("?;") }}, Sick/Million:
-        {{
+      <div v-if="chart" class="subtitle-2">{{ ccountry.alt }}:</div>
+      <div v-if="chart" class="body-2">
+        Total confirmed:&nbsp;{{ current.confirmed | nformat("?;") }}, Total
+        recovered:&nbsp;{{ current.recovered | nformat("?;") }}, Total
+        deaths:&nbsp;{{ current.deaths | nformat("?;") }}, Total cases:&nbsp;{{
+          current.totalSick | nformat("?;")
+        }}, Recovery rate:&nbsp;{{ current.recovRate | nformat("?2;%") }}, Death
+        rate:&nbsp;{{ current.deathRate | nformat("?2;%") }},
+        Death/Million:&nbsp;{{ current.deathPerMillion | nformat("?2;") }},
+        Double in days last:&nbsp;{{
+          current.double1 | nformat("?2;")
+        }}
+        average3:&nbsp;{{ current.double3 | nformat("?2;") }}, New rate
+        last:&nbsp;{{ current.pconf | nformat("?2;%") }} average3:&nbsp;{{
+          current.pconf3 | nformat("?2;%")
+        }}, New to recovered+death rate average3:&nbsp;{{
+          current.confrate | nformat("?1;%")
+        }}, Population:&nbsp;{{ current.population | nformat("?;") }},
+        Sick/Million:&nbsp;{{
           ((current.confirmed * 1000000) / current.population) | nformat("?3;")
         }}
       </div>
       <v-divider class="my-1" />
       <vue-chart
+        v-if="chart"
         style="position: relative; height: 40vh; width: 100%;"
         :data="timeData"
         :options="timeOptions"
@@ -160,6 +163,7 @@
 <script>
 import axios from "axios";
 import countries from "./assets/countries.json";
+import packagej from "../package.json";
 
 const mylang = (navigator.language || navigator.userLanguage).slice(0, 2);
 const myCache = {};
@@ -192,6 +196,7 @@ export default {
       selected: [],
       expanded: 0,
       histList: [],
+      chart: false,
       histHeaders: [
         {
           text: "Country",
@@ -359,7 +364,7 @@ export default {
 
     version() {
       //      console.log(process.env);
-      return process.env.VUE_APP_VERSION;
+      return packagej.version;
     },
 
     consoleLog(...args) {
@@ -607,6 +612,7 @@ export default {
   watch: {
     selectedShort(newC) {
       this.histList = [];
+      this.chart = false;
       return this.wait(30).then((_) =>
         this.pSequence(
           newC,
@@ -615,11 +621,14 @@ export default {
               this.histList.push(Object.assign({}, i.country, i.current))
             ),
           50
+        ).then((_) =>
+          this.wait(10).then((_) => this.$forceUpdate((this.chart = true)))
         )
       );
     },
 
     activeCountry(newC) {
+      if (!newC) return {};
       this.ccountry = this.countryIndex[newC.CountryCode];
       return this.getCountry(newC.CountryCode).then((res) => {
         this.histAt = res;
