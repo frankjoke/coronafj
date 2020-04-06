@@ -21,5 +21,6 @@ module.exports = {
   },
 
   productionSourceMap: false,
-  publicPath: ''
+  publicPath: '.',
+  outputDir: 'coronafj'
 };
