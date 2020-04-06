@@ -10,7 +10,7 @@
   "scripts": {
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
-    "lint": "vue-cli-service lint",
+    "lint": "vue-cli-service lint"
   },
   "main": "background.js",
   "dependencies": {
@@ -30,7 +30,6 @@
     "prettier": "^2.0.4",
     "sass": "^1.26.3",
     "sass-loader": "^8.0.2",
-    "vue-cli-plugin-electron-builder": "^1.4.6",
     "vue-cli-plugin-vuetify": "^2.0.5",
     "vue-template-compiler": "^2.6.11",
     "vuetify-loader": "^1.4.3"
