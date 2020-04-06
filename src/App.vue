@@ -13,6 +13,7 @@
         <span>Private Corona App (v{{ version() }}) @fj</span>
       </div>
 
+      <!-- 
       <v-spacer></v-spacer>
       <v-btn text @click="show = 'chart'">
         Chart
@@ -22,7 +23,6 @@
         List
         <v-icon right>mdi-view-list</v-icon>
       </v-btn>
-      <!-- 
       <v-btn
         href="https://info.gesundheitsministerium.at/"
         target="_blank"
@@ -34,60 +34,7 @@
       -->
     </v-app-bar>
 
-    <v-content v-if="show === 'chart'" class="flex-wrap">
-      <v-row class="ml-1">
-        <v-col cols="3">
-          <v-autocomplete
-            v-model="activeCountry"
-            :hint="`${activeCountry.CountryName}, ${activeCountry.CountryCode}`"
-            :items="countryCodes"
-            item-text="CountryName"
-            item-value="CountryCode"
-            label="Select Country"
-            :search-input.sync="searchCountry"
-            persistent-hint
-            return-object
-            dense
-          ></v-autocomplete>
-        </v-col>
-        <v-col cols="9">
-          <pre v-html="message"></pre>
-        </v-col>
-      </v-row>
-      <v-divider class="my-1" />
-      <div class="body-2">
-        Total confirmed: {{ current.confirmed | nformat("?;") }}, Total
-        recovered: {{ current.recovered | nformat("?;") }}, Total deaths:
-        {{ current.deaths | nformat("?;") }},
-        <br />
-        Total cases: {{ current.totalSick | nformat("?;") }}, Recovery rate:
-        {{ current.recovRate | nformat("?2;%") }}, Death rate:
-        {{ current.deathRate | nformat("?2;%") }}, Death/Million:
-        {{ current.deathPerMillion | nformat("?2;") }},
-        <br />
-        Double in days last:
-        {{ current.double1 | nformat("?2;") }} average3:
-        {{ current.double3 | nformat("?2;") }}, New rate last:
-        {{ current.pconf | nformat("?2;%") }} average3:
-        {{ current.pconf3 | nformat("?2;%") }},
-        <br />
-        New to recovered+death rate average3:
-        {{ current.confrate | nformat("?1;%") }}, Population:
-        {{ current.population | nformat("?;") }}, Sick/Million:
-        {{
-          ((current.confirmed * 1000000) / current.population) | nformat("?3;")
-        }}
-      </div>
-      <v-divider class="my-1" />
-      <vue-chart
-        style="position: relative; height: 60vh; width: 100%;"
-        :data="timeData"
-        :options="timeOptions"
-        :update-config="{ duration: 500, easing: 'easeOutBounce' }"
-        type="line"
-      />
-    </v-content>
-    <v-content v-else class="flex-wrap">
+    <v-content class="flex-wrap">
       <v-combobox
         v-model="selected"
         :items="countryCodes"
@@ -130,6 +77,7 @@
         <template v-slot:item="{ item, headers }">
           <tr class="alternate">
             <td
+              @click="activeCountry =  countryCodes.filter(i => i.CountryCode == item.alpha2Code)[0]"
               v-for="column in headers"
               :key="column.value"
               :class="
@@ -146,6 +94,39 @@
           </tr></template
         >
       </v-data-table>
+      <v-divider class="my-1" />
+      <div class="subtitle-2">{{ ccountry.alt }}:</div>
+      <div class="body-2">
+        Total confirmed: {{ current.confirmed | nformat("?;") }}, Total
+        recovered: {{ current.recovered | nformat("?;") }}, Total deaths:
+        {{ current.deaths | nformat("?;") }},
+        <br />
+        Total cases: {{ current.totalSick | nformat("?;") }}, Recovery rate:
+        {{ current.recovRate | nformat("?2;%") }}, Death rate:
+        {{ current.deathRate | nformat("?2;%") }}, Death/Million:
+        {{ current.deathPerMillion | nformat("?2;") }},
+        <br />
+        Double in days last:
+        {{ current.double1 | nformat("?2;") }} average3:
+        {{ current.double3 | nformat("?2;") }}, New rate last:
+        {{ current.pconf | nformat("?2;%") }} average3:
+        {{ current.pconf3 | nformat("?2;%") }},
+        <br />
+        New to recovered+death rate average3:
+        {{ current.confrate | nformat("?1;%") }}, Population:
+        {{ current.population | nformat("?;") }}, Sick/Million:
+        {{
+          ((current.confirmed * 1000000) / current.population) | nformat("?3;")
+        }}
+      </div>
+      <v-divider class="my-1" />
+      <vue-chart
+        style="position: relative; height: 40vh; width: 100%;"
+        :data="timeData"
+        :options="timeOptions"
+        :update-config="{ duration: 500, easing: 'easeOutBounce' }"
+        type="line"
+      />
 
       <!--       
       <div class="body-2">
@@ -197,7 +178,6 @@ export default {
   data: () => {
     return {
       //      myData: myData,
-      show: "chart",
       histAt: null,
       timeData: null,
       timeOptions: null,
@@ -209,7 +189,7 @@ export default {
       countryIndex: {},
       ccountry: null,
       current: { confirmed: 0 },
-      selected: ["AT", "DE"],
+      selected: [],
       expanded: 0,
       histList: [],
       histHeaders: [
