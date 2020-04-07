@@ -1,26 +1,28 @@
 {
   "name": "coronafj",
   "version": "0.2.0",
+  "private": true,
+  "description": "Takes ministry data and calculates some development trends",
   "author": {
     "name": "frankjoke",
     "email": "frankjoke@hotmail.com"
   },
-  "description": "Takes ministry data and calculates some development trends",
-  "private": true,
   "scripts": {
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
-    "lint": "vue-cli-service lint"
+    "lint": "vue-cli-service lint",
+    "i18n:report": "vue-cli-service i18n:report --src './src/**/*.?(js|vue)' --locales './src/locales/**/*.json'"
   },
-  "dependencies": {},
+  "dependencies": {
+    "vue-i18n": "^8.0.0"
+  },
   "devDependencies": {
+    "@kazupon/vue-i18n-loader": "^0.3.0",
     "@seregpie/vue-chart": "^1.0.1",
-    "axios": "^0.19.2",
-    "vue": "^2.6.11",
-    "vuetify": "^2.2.20",
     "@vue/cli-plugin-eslint": "^4.3.0",
     "@vue/cli-service": "^4.3.0",
     "@vue/eslint-config-prettier": "^6.0.0",
+    "axios": "^0.19.2",
     "babel-eslint": "^10.1.0",
     "eslint": "^6.8.0",
     "eslint-plugin-prettier": "^3.1.2",
@@ -28,8 +30,11 @@
     "prettier": "^2.0.4",
     "sass": "^1.26.3",
     "sass-loader": "^8.0.2",
+    "vue": "^2.6.11",
+    "vue-cli-plugin-i18n": "^0.6.1",
     "vue-cli-plugin-vuetify": "^2.0.5",
     "vue-template-compiler": "^2.6.11",
+    "vuetify": "^2.2.20",
     "vuetify-loader": "^1.4.3"
   },
   "eslintConfig": {
