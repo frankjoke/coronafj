@@ -13,13 +13,12 @@
     "lint": "vue-cli-service lint"
   },
   "main": "background.js",
-  "dependencies": {
-  },
+  "dependencies": {},
   "devDependencies": {
     "@seregpie/vue-chart": "^1.0.1",
     "axios": "^0.19.2",
     "vue": "^2.6.11",
-    "vuetify": "^2.2.18",
+    "vuetify": "^2.2.20",
     "@vue/cli-plugin-eslint": "^4.3.0",
     "@vue/cli-service": "^4.3.0",
     "@vue/eslint-config-prettier": "^6.0.0",
