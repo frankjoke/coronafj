@@ -712,10 +712,10 @@ export default {
           confirmed: "sick|log1|total",
           deaths: "deaths|log1|total",
           recovered: "recovered|log1|total",
-          tconf3: "new|n3|/day2",
+          tconf3: "new|n3|/day",
           pconf3: "new %|perc|",
           tdeath: "died|n4|/day1",
-          treco3: "recovered|n3|/day2",
+          treco3: "recovered|n3|/day",
           double3: "toDouble|n5|days",
         };
         const naxes = {};
