@@ -12,7 +12,6 @@
     "build": "vue-cli-service build",
     "lint": "vue-cli-service lint"
   },
-  "main": "background.js",
   "dependencies": {},
   "devDependencies": {
     "@seregpie/vue-chart": "^1.0.1",
