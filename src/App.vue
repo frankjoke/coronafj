@@ -784,7 +784,7 @@ export default {
   },
 
   mounted() {
-//    console.log("Mounted:", this.$t);
+    //    console.log("Mounted:", this.$t);
     this.countries.map((i) => (this.countryIndex[i.alpha2Code] = i));
     this.activeCountry = { CountryCode: "AT", CountryName: "Austria" };
     this.selected = this.countryCodes.filter(
@@ -808,8 +808,7 @@ export default {
     this.$nextTick().then((_) => this.$forceUpdate());
   },
 
-  created() {
-  },
+  created() {},
 };
 </script>
 <style>
