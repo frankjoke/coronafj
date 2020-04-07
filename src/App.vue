@@ -3,12 +3,12 @@
     <v-app-bar app color="primary" dark>
       <div class="d-flex align-center">
         <v-img
-          alt="Vuetify Logo"
+          alt="Coronafj Logo"
           class="shrink mr-2"
           contain
-          src="https://info.gesundheitsministerium.at/favicon.ico"
+          src="../public/coronafj.png"
           transition="scale-transition"
-          width="40"
+          width="35"
         />
         <span>Private Corona App (v{{ version() }}) @fj</span>
       </div>
@@ -99,16 +99,17 @@
         </template>
       </v-data-table>
       <v-divider class="my-1" />
-      <div v-if="chart" class="subtitle-2">{{ ccountry.alt }}:</div>
-      <div v-if="chart" class="body-2">
+      <div class="subtitle-2">{{ ccountry && ccountry.alt }}:</div>
+      <div class="body-2">
         Total confirmed:&nbsp;{{ current.confirmed | nformat("?;") }}, Total
         recovered:&nbsp;{{ current.recovered | nformat("?;") }}, Total
         deaths:&nbsp;{{ current.deaths | nformat("?;") }}, Total cases:&nbsp;{{
           current.totalSick | nformat("?;")
         }}, Recovery rate:&nbsp;{{ current.recovRate | nformat("?2;%") }}, Death
         rate:&nbsp;{{ current.deathRate | nformat("?2;%") }},
-        Death/Million:&nbsp;{{ current.deathPerMillion | nformat("?2;") }},
-        Double in days last:&nbsp;{{
+        {{ $t("DeathMillion") }}:&nbsp;{{
+          current.deathPerMillion | nformat("?2;")
+        }}, Double in days last:&nbsp;{{
           current.double1 | nformat("?2;")
         }}
         average3:&nbsp;{{ current.double3 | nformat("?2;") }}, New rate
@@ -182,6 +183,7 @@ export default {
   data: () => {
     return {
       //      myData: myData,
+      chart: false,
       histAt: null,
       timeData: null,
       timeOptions: null,
@@ -196,12 +198,11 @@ export default {
       selected: [],
       expanded: 0,
       histList: [],
-      chart: false,
       histHeaders: [
         {
           text: "Country",
           align: "start",
-          sortable: true,
+          sortable: false,
           value: "alt",
         },
         // {
@@ -783,7 +784,7 @@ export default {
   },
 
   mounted() {
-    //    this.consoleLog("Mounted.");
+//    console.log("Mounted:", this.$t);
     this.countries.map((i) => (this.countryIndex[i.alpha2Code] = i));
     this.activeCountry = { CountryCode: "AT", CountryName: "Austria" };
     this.selected = this.countryCodes.filter(
@@ -807,7 +808,8 @@ export default {
     this.$nextTick().then((_) => this.$forceUpdate());
   },
 
-  created() {},
+  created() {
+  },
 };
 </script>
 <style>
