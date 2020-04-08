@@ -40,7 +40,6 @@
         v-model="selected"
         :items="countryCodes"
         :hint="selectedShort.join(', ')"
-        @keydown="checkKeydown($event)"
         item-text="CountryName"
         item-value="CountryCode"
         small-chips
@@ -51,6 +50,7 @@
         prepend-icon="mdi-filter-outline"
         outlined
         hide-selected
+        :filter="filterItem"
         :menu-props="{
           auto: false,
           overflowY: true,
@@ -367,8 +367,11 @@ export default {
       )[0];
     },
 
-    checkKeydown(event) {
-      console.log(event);
+    filterItem(item, qText, iText) {
+      const s = qText.toLowerCase();
+      const t = iText.toLowerCase() + " " + item.CountryCode.toLowerCase();
+//      console.log("filter:", qText, " itext:", iText, "item:", item);
+      return t.indexOf(s) >= 0;
     },
 
     remove(item) {
@@ -635,6 +638,7 @@ export default {
   },
   watch: {
     selectedShort(newC) {
+      const list = [];
       this.histList = [];
       this.chart = false;
       return this.wait(30).then((_) =>
@@ -642,12 +646,13 @@ export default {
           newC,
           (code) =>
             this.getCountry(code).then((i) =>
-              this.histList.push(Object.assign({}, i.country, i.current))
+              list.push(Object.assign({}, i.country, i.current))
             ),
-          50
-        ).then((_) =>
-          this.wait(10).then((_) => this.$forceUpdate((this.chart = true)))
-        )
+          10
+        ).then((_) => {
+          this.histList = list;
+          return this.wait(10).then((_) => this.$forceUpdate((this.chart = true)))
+        })
       );
     },
 
@@ -732,14 +737,14 @@ export default {
         const example = history[0];
         const series = [];
         const axes = {
-          tconf3: "new|log2|day",
+          tconf3: "new|log2|/day",
           confirmed: "sick total|log1|total",
           double3: "toDouble|n5|days",
           pconf3: "new %|perc|",
           active: "sick actual|log1|total",
           recovered: "recovered|log1|total",
-          tdeaths: "died|log2|day",
-          treco3: "recovered|log2|day",
+          tdeaths: "died|log2|/day",
+          treco3: "recovered|log2|/day",
         };
         const naxes = {};
         let posit = false;
