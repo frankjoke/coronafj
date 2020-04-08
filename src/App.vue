@@ -36,24 +36,35 @@
 
     <v-content class="flex-wrap">
       <v-combobox
+        class="pa-2"
         v-model="selected"
         :items="countryCodes"
         :hint="selectedShort.join(', ')"
+        @keydown="checkKeydown($event)"
         item-text="CountryName"
         item-value="CountryCode"
-        chips
+        small-chips
         persistent-hint
         clearable
         label="Select countries for list:"
         multiple
         prepend-icon="mdi-filter-outline"
-        solo
+        outlined
+        hide-selected
+        :menu-props="{
+          auto: false,
+          overflowY: true,
+          maxHeight: 300,
+          closeOnClick: false,
+          closeOnContentClick: true,
+          openOnClick: false,
+        }"
       >
-        <template v-slot:selection="{ attrs, item, select }">
+        <template v-slot:selection="{ attrs, item }">
           <v-chip
             v-bind="attrs"
             close
-            @click="select"
+            @click.stop="setCountry(item.CountryCode, $event)"
             @click:close="remove(item)"
             small
           >
@@ -69,32 +80,31 @@
         :items="histList"
         dense
         hide-default-footer
-        class="elevation-2"
+        class="elevation-2 pa-1"
         :items-per-page="100"
         must-sort
+        fixed-header
         :sort-by="['sickPerMillion']"
       >
         <template v-slot:item="{ item, headers }">
-          <tr class="alternate">
+          <tr
+            class="alternate"
+            @click.stop="setCountry(item.alpha2Code, $event)"
+          >
             <td
-              @click="
-                activeCountry = countryCodes.filter(
-                  (i) => i.CountryCode == item.alpha2Code
-                )[0]
-              "
+              class="px-1"
               v-for="column in headers"
               :key="column.value"
               :class="
                 { center: 'text-center', end: 'text-right' }[column.align] ||
                 'text-start'
               "
-            >
-              {{
+              v-text="
                 column.format
                   ? numberFormat(item[column.value], column.format)
                   : item[column.value]
-              }}
-            </td>
+              "
+            />
           </tr>
         </template>
       </v-data-table>
@@ -124,6 +134,7 @@
       </div>
       <v-divider class="my-1" />
       <vue-chart
+        class="pa-1"
         v-if="chart"
         style="position: relative; height: 40vh; width: 100%;"
         :data="timeData"
@@ -349,6 +360,17 @@ export default {
     },
   },
   methods: {
+    setCountry(item, event) {
+      event.stopPropagation();
+      this.activeCountry = this.countryCodes.filter(
+        (i) => i.CountryCode == item
+      )[0];
+    },
+
+    checkKeydown(event) {
+      console.log(event);
+    },
+
     remove(item) {
       this.selected.splice(this.selected.indexOf(item), 1);
       this.selected = [...this.selected];
@@ -399,6 +421,7 @@ export default {
       for (let i = 0; i < history.length; i++) {
         const item = history[i];
         // calculate all new values
+        item.active = item.confirmed - item.deaths - item.recovered;
         item.tconf = item.confirmed - (i > 0 ? history[i - 1].confirmed : 0);
         item.tconf3 = sq3m(item, "tconf", i, 4);
         item.tdeaths = item.deaths - (i > 0 ? history[i - 1].deaths : 0);
@@ -709,71 +732,66 @@ export default {
         const example = history[0];
         const series = [];
         const axes = {
-          confirmed: "sick|log1|total",
-          deaths: "deaths|log1|total",
-          recovered: "recovered|log1|total",
-          tconf3: "new|n3|/day",
-          pconf3: "new %|perc|",
-          tdeath: "died|n4|/day1",
-          treco3: "recovered|n3|/day",
+          tconf3: "new|log2|day",
+          confirmed: "sick total|log1|total",
           double3: "toDouble|n5|days",
+          pconf3: "new %|perc|",
+          active: "sick actual|log1|total",
+          recovered: "recovered|log1|total",
+          tdeaths: "died|log2|day",
+          treco3: "recovered|log2|day",
         };
         const naxes = {};
         let posit = false;
         const yAxes = [];
-        Object.keys(example).map((n) => {
-          if (axes[n]) {
-            const an = axes[n].split("|");
-            const a = an[1];
-            const se = {
-              name: n,
-              label: an[0] + (an[2] ? "/" + an[2] : ""),
-              yAxisID: a,
-              data: [],
-              fill: false,
-              borderColor: hexToRGB(colors[series.length % colors.length], 0.9),
+        for (const n of Object.keys(axes)) {
+          const an = axes[n].split("|");
+          const a = an[1];
+          const se = {
+            name: n,
+            label: an[0] + (an[2] ? "-" + an[2] : ""),
+            yAxisID: a,
+            data: [],
+            fill: false,
+            borderColor: hexToRGB(colors[series.length % colors.length], 0.9),
+          };
+          se.backgroundColor = se.borderColor;
+          series.push(se);
+          if (!naxes[a]) {
+            const nax = {
+              id: a,
+              position: (posit = !posit) ? "left" : "right",
+              type: a.startsWith("log") ? "logarithmic" : "linear",
+              scaleLabel: {
+                labelString: an[2],
+                display: a != "perc",
+              },
+              ticks: {
+                fontColor: "#202020",
+                fontSize: 14,
+                callback:
+                  a == "perc"
+                    ? function (value, index, values) {
+                        return (
+                          "    ".slice(0, 4 - value.toString().length) +
+                          value +
+                          " %"
+                        );
+                      }
+                    : (v) => v,
+                //           beginAtZero: true,
+              },
             };
-            se.backgroundColor = se.borderColor;
-            series.push(se);
-            if (!naxes[a]) {
-              const nax = {
-                id: a,
-                position: (posit = !posit) ? "left" : "right",
-                type: a.startsWith("log") ? "logarithmic" : "linear",
-                scaleLabel: {
-                  labelString: an[2],
-                  display: a != "perc",
-                },
-                ticks: {
-                  fontColor: "#202020",
-                  fontSize: 14,
-                  callback:
-                    a == "perc"
-                      ? function (value, index, values) {
-                          return (
-                            "    ".slice(0, 4 - value.toString().length) +
-                            value +
-                            " %"
-                          );
-                        }
-                      : (v) => v,
-                  //           beginAtZero: true,
-                },
-              };
-              naxes[a] = nax;
-              yAxes.push(nax);
-            }
+            naxes[a] = nax;
+            yAxes.push(nax);
           }
-        });
+          //          }
+        }
         for (let i = 0; i < history.length; i++) {
           const item = history[i];
           labels.push(new Date(item.date));
           let s = 0;
-          Object.keys(example).map((n) => {
-            if (axes[n]) {
-              series[s++].data.push(item[n]);
-            }
-          });
+          for (const n of Object.keys(axes)) series[s++].data.push(item[n]);
         }
         datasets = series;
         options.scales.yAxes = yAxes;
@@ -785,25 +803,14 @@ export default {
 
   mounted() {
     //    console.log("Mounted:", this.$t);
+    this.$i18n.locale = this.myLang;
     this.countries.map((i) => (this.countryIndex[i.alpha2Code] = i));
     this.activeCountry = { CountryCode: "AT", CountryName: "Austria" };
     this.selected = this.countryCodes.filter(
       (i) =>
-        [
-          "AT",
-          "DE",
-          "CH",
-          "UK",
-          "IT",
-          "FR",
-          "US",
-          "GB",
-          "ES",
-          "SE",
-          "NO",
-          "NL",
-          "BE",
-        ].indexOf(i.CountryCode) >= 0
+        "AT, CH, DE, BE, CN, DK, FI, FR, IT, NL, NO, ES, SE, GB, US"
+          .split(", ")
+          .indexOf(i.CountryCode) >= 0
     );
     this.$nextTick().then((_) => this.$forceUpdate());
   },
@@ -811,7 +818,7 @@ export default {
   created() {},
 };
 </script>
-<style>
+<style scoped.vue>
 html {
   overflow-y: auto !important;
 }
@@ -819,8 +826,10 @@ html {
 tr.alternate:nth-child(odd) {
   background: #e3f2fd;
 }
-::v-deep td,
-::v-deep th {
+
+td,
+th,
+th[role="columnheader"] {
   padding: 0 1px;
   border-left: 1px dotted #dddddd;
 }

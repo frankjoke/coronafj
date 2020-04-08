@@ -2,7 +2,7 @@
   "name": "coronafj",
   "version": "0.2.0",
   "private": true,
-  "description": "Takes ministry data and calculates some development trends",
+  "description": "Takes different country corona data some development trends",
   "author": {
     "name": "frankjoke",
     "email": "frankjoke@hotmail.com"
