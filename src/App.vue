@@ -110,11 +110,10 @@
       <v-divider class="my-1" />
       <div class="subtitle-2" style="display: flex;">
         <v-img
+        v-if="ccountry && ccountry.alpha2Code"
           max-width="24"
           :src="
-            'https://www.countryflags.io/' +
-            ccountry.alpha2Code +
-            '/flat/64.png'
+            'https://www.countryflags.io/' + ccountry.alpha2Code + '/flat/64.png'
           "
         ></v-img
         ><span class="ml-1">{{ ccountry && ccountry.alt }}:</span>
