@@ -44,21 +44,12 @@
         item-value="CountryCode"
         small-chips
         persistent-hint
-        clearable
         label="Select countries for list:"
         multiple
         prepend-icon="mdi-filter-outline"
         outlined
-        hide-selected
         :filter="filterItem"
-        :menu-props="{
-          auto: false,
-          overflowY: true,
-          maxHeight: 300,
-          closeOnClick: false,
-          closeOnContentClick: true,
-          openOnClick: false,
-        }"
+        :menu-props="mprops"
       >
         <template v-slot:selection="{ attrs, item }">
           <v-chip
@@ -67,7 +58,15 @@
             @click.stop="setCountry(item.CountryCode, $event)"
             @click:close="remove(item)"
             small
-          >
+            ><v-avatar left>
+              <v-img
+                :src="
+                  'https://www.countryflags.io/' +
+                  item.CountryCode +
+                  '/flat/64.png'
+                "
+              ></v-img>
+            </v-avatar>
             <strong>{{ item.CountryCode }}</strong
             >&nbsp;
             <span>({{ item.alt }})</span>
@@ -109,7 +108,17 @@
         </template>
       </v-data-table>
       <v-divider class="my-1" />
-      <div class="subtitle-2">{{ ccountry && ccountry.alt }}:</div>
+      <div class="subtitle-2" style="display: flex;">
+        <v-img
+          max-width="24"
+          :src="
+            'https://www.countryflags.io/' +
+            ccountry.alpha2Code +
+            '/flat/64.png'
+          "
+        ></v-img
+        ><span class="ml-1">{{ ccountry && ccountry.alt }}:</span>
+      </div>
       <div class="body-2">
         Total cases:&nbsp;{{ current.confirmed | nformat("?;") }}, Total
         recovered:&nbsp;{{ current.recovered | nformat("?;") }}, Total
@@ -208,7 +217,18 @@ export default {
       current: { confirmed: 0 },
       selected: [],
       expanded: 0,
+      mprops: {
+        auto: true,
+        overflowY: true,
+        maxHeight: 300,
+        closeOnClick: false,
+        closeOnContentClick: true,
+        openOnClick: false,
+        disabled: false,
+      },
       histList: [],
+      // tmp: {},
+      // tmp1: {},
       histHeaders: [
         {
           text: "Country",
@@ -362,9 +382,12 @@ export default {
   methods: {
     setCountry(item, event) {
       event.stopPropagation();
+      //      this.mprops.disabled = true;
       this.activeCountry = this.countryCodes.filter(
         (i) => i.CountryCode == item
       )[0];
+      //      setTimeout((_) => (this.mprops.disabled = false), 100);
+      //      this.$nextTick().then();
     },
 
     filterItem(item, qText, iText) {
@@ -809,6 +832,39 @@ export default {
 
   mounted() {
     //    console.log("Mounted:", this.$t);
+    /*     axios(
+      "https://coronavirus-monitor.p.rapidapi.com/coronavirus/cases_by_particular_country.php?country=Austria",
+      {
+        method: "GET",
+        headers: {
+          "x-rapidapi-host": "coronavirus-monitor.p.rapidapi.com",
+          "x-rapidapi-key":
+            "f15ec2b43amshcdf31a3383ec09dp1c4144jsn44f08110d1c8",
+        },
+      }
+    )
+      .then(
+        (response) => console.log((this.tmp = response.data)),
+        (err) => console.log(err)
+      )
+      .then((_) => {
+      console.log("second");
+        return axios(
+          "https://coronavirus-monitor.p.rapidapi.com/coronavirus/history_by_particular_country_by_date.php?country=Austria&date=2020-04-09",
+          {
+            method: "GET",
+            headers: {
+              "x-rapidapi-host": "coronavirus-monitor.p.rapidapi.com",
+              "x-rapidapi-key":
+                "f15ec2b43amshcdf31a3383ec09dp1c4144jsn44f08110d1c8",
+            },
+          }
+        ).then(
+          (response) => console.log((this.tmp1 = response.data)),
+          (err) => console.log(err)
+        );
+      });
+ */
     this.$i18n.locale = this.myLang;
     this.countries.map((i) => (this.countryIndex[i.alpha2Code] = i));
     this.activeCountry = { CountryCode: "AT", CountryName: "Austria" };
