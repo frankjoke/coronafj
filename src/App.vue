@@ -111,9 +111,9 @@
       <v-divider class="my-1" />
       <div class="subtitle-2">{{ ccountry && ccountry.alt }}:</div>
       <div class="body-2">
-        Total confirmed:&nbsp;{{ current.confirmed | nformat("?;") }}, Total
+        Total cases:&nbsp;{{ current.confirmed | nformat("?;") }}, Total
         recovered:&nbsp;{{ current.recovered | nformat("?;") }}, Total
-        deaths:&nbsp;{{ current.deaths | nformat("?;") }}, Total cases:&nbsp;{{
+        deaths:&nbsp;{{ current.deaths | nformat("?;") }}, Current sick:&nbsp;{{
           current.totalSick | nformat("?;")
         }}, Recovery rate:&nbsp;{{ current.recovRate | nformat("?2;%") }}, Death
         rate:&nbsp;{{ current.deathRate | nformat("?2;%") }},
@@ -450,7 +450,7 @@ export default {
       let last = { confirmed: 0 };
       if (history && history.length) {
         last = JSON.parse(JSON.stringify(history[history.length - 1]));
-        last.totalSick = last.confirmed + last.deaths + last.recovered;
+        last.totalSick = last.confirmed - last.deaths - last.recovered;
         last.deathRate = (100.0 * last.deaths) / last.totalSick;
         last.recovRate = (100.0 * last.recovered) / last.totalSick;
         last.confrate = (100.0 * last.tconf3) / (last.treco3 + last.tdeaths3);
