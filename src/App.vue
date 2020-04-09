@@ -139,7 +139,7 @@
         style="position: relative; height: 40vh; width: 100%;"
         :data="timeData"
         :options="timeOptions"
-        :update-config="{ duration: 500, easing: 'easeOutBounce' }"
+        :update-config="{ duration: 500, easing: 'easeInOutCirc' }"
         type="line"
       />
 
@@ -370,7 +370,7 @@ export default {
     filterItem(item, qText, iText) {
       const s = qText.toLowerCase();
       const t = iText.toLowerCase() + " " + item.CountryCode.toLowerCase();
-//      console.log("filter:", qText, " itext:", iText, "item:", item);
+      //      console.log("filter:", qText, " itext:", iText, "item:", item);
       return t.indexOf(s) >= 0;
     },
 
@@ -428,12 +428,11 @@ export default {
         item.tconf = item.confirmed - (i > 0 ? history[i - 1].confirmed : 0);
         item.tconf3 = sq3m(item, "tconf", i, 4);
         item.tdeaths = item.deaths - (i > 0 ? history[i - 1].deaths : 0);
-        item.tdeaths3 = sq3m(item, "tdeaths", i, 3);
+        item.tdeaths3 = sq3m(item, "tdeaths", i, 4);
         item.treco = item.recovered - (i > 0 ? history[i - 1].recovered : 0);
-        item.treco3 = sq3m(item, "treco", i, 3);
-        item.pconf =
-          (item.confirmed && (100.0 * item.tconf) / item.confirmed) || 0;
-        item.pconf3 = sq3m(item, "pconf", i, 3);
+        item.treco3 = sq3m(item, "treco", i, 4);
+        item.pconf = (item.active && (100.0 * item.tconf) / item.active) || 0;
+        item.pconf3 = sq3m(item, "pconf", i, 4);
         if (item.pconf3 > 60) item.pconf3 = null;
         let c =
           i < 2
@@ -638,7 +637,7 @@ export default {
   },
   watch: {
     selectedShort(newC) {
-      const list = [];
+      //      const list = [];
       this.histList = [];
       this.chart = false;
       return this.wait(30).then((_) =>
@@ -646,12 +645,14 @@ export default {
           newC,
           (code) =>
             this.getCountry(code).then((i) =>
-              list.push(Object.assign({}, i.country, i.current))
+              this.histList.push(Object.assign({}, i.country, i.current))
             ),
           10
         ).then((_) => {
-          this.histList = list;
-          return this.wait(10).then((_) => this.$forceUpdate((this.chart = true)))
+          //          this.histList = list;
+          return this.wait(10).then((_) =>
+            this.$forceUpdate((this.chart = true))
+          );
         })
       );
     },
@@ -813,7 +814,7 @@ export default {
     this.activeCountry = { CountryCode: "AT", CountryName: "Austria" };
     this.selected = this.countryCodes.filter(
       (i) =>
-        "AT, CH, DE, BE, CN, DK, FI, FR, IT, NL, NO, ES, SE, GB, US"
+        "AT, CH, DE, BE, CN, DK, FI, FR, IT, NL, NO, ES, PT, SE, GB, US"
           .split(", ")
           .indexOf(i.CountryCode) >= 0
     );
