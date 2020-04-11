@@ -60,6 +60,7 @@
             small
             ><v-avatar left>
               <v-img
+                v-if="item && item.CountryCode"
                 :src="
                   'https://www.countryflags.io/' +
                   item.CountryCode +
@@ -110,10 +111,12 @@
       <v-divider class="my-1" />
       <div class="subtitle-2" style="display: flex;">
         <v-img
-        v-if="ccountry && ccountry.alpha2Code"
+          v-if="ccountry && ccountry.alpha2Code"
           max-width="24"
           :src="
-            'https://www.countryflags.io/' + ccountry.alpha2Code + '/flat/64.png'
+            'https://www.countryflags.io/' +
+            ccountry.alpha2Code +
+            '/flat/64.png'
           "
         ></v-img
         ><span class="ml-1">{{ ccountry && ccountry.alt }}:</span>
@@ -122,7 +125,7 @@
         Total cases:&nbsp;{{ current.confirmed | nformat("?;") }}, Total
         recovered:&nbsp;{{ current.recovered | nformat("?;") }}, Total
         deaths:&nbsp;{{ current.deaths | nformat("?;") }}, Current sick:&nbsp;{{
-          current.totalSick | nformat("?;")
+          current.active | nformat("?;")
         }}, Recovery rate:&nbsp;{{ current.recovRate | nformat("?2;%") }}, Death
         rate:&nbsp;{{ current.deathRate | nformat("?2;%") }},
         {{ $t("DeathMillion") }}:&nbsp;{{
@@ -138,7 +141,9 @@
         }}, Population:&nbsp;{{ current.population | nformat("?;") }},
         Sick/Million:&nbsp;{{
           ((current.confirmed * 1000000) / current.population) | nformat("?3;")
-        }}
+        }}, Sick%Tested:&nbsp;{{
+          ((current.confirmed * 100.0) / current.tests) | nformat("?3;")
+        }},
       </div>
       <v-divider class="my-1" />
       <vue-chart
@@ -209,12 +214,14 @@ export default {
       activeCountry: "",
       message: "",
       searchCountry: "",
+      aCountries: [],
       myLang: mylang,
       countries: countries,
       countryIndex: {},
       ccountry: null,
       current: { confirmed: 0 },
       selected: [],
+      gotCountries: false,
       expanded: 0,
       mprops: {
         auto: true,
@@ -228,6 +235,7 @@ export default {
       histList: [],
       // tmp: {},
       // tmp1: {},
+      // tmp2: {},
       histHeaders: [
         {
           text: "Country",
@@ -262,6 +270,20 @@ export default {
           sortable: true,
           value: "deathPerMillion",
           format: "?1;",
+        },
+        {
+          text: "Critical%",
+          align: "end",
+          sortable: true,
+          value: "pcritical",
+          format: "?2;",
+        },
+        {
+          text: "Tests%",
+          align: "end",
+          sortable: true,
+          value: "mtests",
+          format: "?3;",
         },
         {
           text: "Deaths%",
@@ -317,6 +339,13 @@ export default {
           align: "end",
           sortable: true,
           value: "deaths",
+          format: "?;",
+        },
+        {
+          text: "Tests",
+          align: "end",
+          sortable: true,
+          value: "tests",
           format: "?;",
         },
         {
@@ -421,7 +450,7 @@ export default {
       this.message += s + "<br>";
     },
 
-    calcHistory(history) {
+    calcHistory(history, country) {
       function sq3m(e, key, i, n) {
         const ci = e[key];
         let cs = ci * ci;
@@ -446,7 +475,9 @@ export default {
       for (let i = 0; i < history.length; i++) {
         const item = history[i];
         // calculate all new values
-        item.active = item.confirmed - item.deaths - item.recovered;
+        //        item.active = item.confirmed - item.deaths - item.recovered;
+        item.mtests = (item.tests * 100.0) / country.population;
+        item.pcritical = (item.critical * 100.0) / item.active;
         item.tconf = item.confirmed - (i > 0 ? history[i - 1].confirmed : 0);
         item.tconf3 = sq3m(item, "tconf", i, 4);
         item.tdeaths = item.deaths - (i > 0 ? history[i - 1].deaths : 0);
@@ -472,9 +503,8 @@ export default {
       let last = { confirmed: 0 };
       if (history && history.length) {
         last = JSON.parse(JSON.stringify(history[history.length - 1]));
-        last.totalSick = last.confirmed - last.deaths - last.recovered;
-        last.deathRate = (100.0 * last.deaths) / last.totalSick;
-        last.recovRate = (100.0 * last.recovered) / last.totalSick;
+        last.deathRate = (100.0 * last.deaths) / last.active;
+        last.recovRate = (100.0 * last.recovered) / last.active;
         last.confrate = (100.0 * last.tconf3) / (last.treco3 + last.tdeaths3);
         last.double1 = last.double1;
         last.double3 = last.double3;
@@ -572,26 +602,82 @@ export default {
       });
     },
 */
-    getCountry(code) {
-      if (myCache[code]) return Promise.resolve(myCache[code]);
-      return axios
-        .get("https://api.smartable.ai/coronavirus/stats/" + code, {
-          headers: { "Subscription-Key": "3009d4ccc29e4808af1ccc25c69b4d5d" },
-        })
-        .then(
-          (res) => {
-            res = res.data;
-            res.country = this.countryIndex[code];
-            res.history = this.calcHistory(res.stats.history);
-            res.current = this.calcLast(res.history, res.country);
-            myCache[code] = res;
-            return res;
-          },
-          (e) => {
-            this.consoleLog("Error get country data for", code);
-            return {};
+    async getCountry(code) {
+      function makeRec(i) {
+        const rec = {
+          date: i.day,
+          deaths: i.deaths.total,
+          tdeasths: Number(i.deaths.new),
+          confirmed: i.cases.total,
+          recovered: i.cases.recovered,
+          critical: i.cases.critical,
+          active: i.cases.active,
+          tconf: Number(i.cases.new),
+        };
+        if (i.tests.total) rec.tests = i.tests.total;
+        return rec;
+      }
+      if (myCache[code]) return myCache[code];
+      const country = this.countryIndex[code] && this.countryIndex[code].bname;
+      const chist = [];
+      if (!country)
+        return console.log("Error: Cannot load history data for:", code), null;
+      let res = null;
+      try {
+        res = await axios(
+          "https://covid-193.p.rapidapi.com/history?country=" + country,
+          {
+            method: "GET",
+            headers: {
+              "x-rapidapi-host": "covid-193.p.rapidapi.com",
+              "x-rapidapi-key":
+                "f15ec2b43amshcdf31a3383ec09dp1c4144jsn44f08110d1c8",
+            },
           }
         );
+        res = res.data;
+        res.country = this.countryIndex[code];
+        const hist = res.response;
+        let day = "";
+        for (const i of hist) {
+          if (i.day != day) {
+            day = i.day;
+            chist.unshift(makeRec(i));
+          }
+        }
+        if (day > "2020-02-22") {
+          let ret = null;
+          try {
+            ret = await axios.get(
+              "https://api.smartable.ai/coronavirus/stats/" + code,
+              {
+                headers: {
+                  "Subscription-Key": "3009d4ccc29e4808af1ccc25c69b4d5d",
+                },
+              }
+            );
+            ret = ret.data.stats.history;
+            //            console.log(ret);
+            for (let i = ret.length; i > 0; --i) {
+              const f = ret[i - 1];
+              f.date = f.date.slice(0, 10);
+              f.active = f.confirmed - f.deaths - f.recovered;
+              //              console.log(i, f);
+              if (f.date > "2020-02-21" && f.date < day) chist.unshift(f);
+            }
+          } catch (e) {
+            this.consoleLog("Error get additional country data for", code, e);
+          }
+        }
+      } catch (e) {
+        this.consoleLog("Error get country data for", code, e);
+        return null;
+      }
+      //      console.log(chist);
+      res.history = this.calcHistory(chist, res.country);
+      res.current = this.calcLast(res.history, res.country);
+      myCache[code] = res;
+      return res;
     },
 
     wait(time) {
@@ -628,7 +714,9 @@ export default {
         .map((c) => {
           const ret = {
             CountryCode: c.alpha2Code,
-            CountryName: c.name,
+            CountryName: c.aname || c.name,
+            aname: c.aname || c.name,
+            bname: c.bname || c.name,
           };
           c.alt = c.name;
           let alt = "";
@@ -658,6 +746,20 @@ export default {
     },
   },
   watch: {
+    gotCountries() {
+      this.selected = this.countryCodes.filter(
+        (i) =>
+//          "AT, DE"
+          "AT, CH, DE, BE, CN, DK, FI, FR, IT, NL, NO, ES, PT, SE, GB, US"
+            .split(",")
+            .map((i) => i.trim())
+            .indexOf(i.CountryCode) >= 0
+      );
+      this.$nextTick().then((_) =>
+        this.$forceUpdate((this.activeCountry = this.selected[0]))
+      );
+    },
+
     selectedShort(newC) {
       //      const list = [];
       this.histList = [];
@@ -667,7 +769,9 @@ export default {
           newC,
           (code) =>
             this.getCountry(code).then((i) =>
-              this.histList.push(Object.assign({}, i.country, i.current))
+              i
+                ? this.histList.push(Object.assign({}, i.country, i.current))
+                : null
             ),
           10
         ).then((_) => {
@@ -682,9 +786,9 @@ export default {
     activeCountry(newC) {
       if (!newC) return {};
       this.ccountry = this.countryIndex[newC.CountryCode];
-      return this.getCountry(newC.CountryCode).then((res) => {
-        this.histAt = res;
-      });
+      return this.getCountry(newC.CountryCode).then((res) =>
+        res ? (this.histAt = res) : null
+      );
     },
 
     histAt(newH) {
@@ -721,7 +825,7 @@ export default {
         "#64DD17",
       ];
 
-      const country = newH && newH.location && newH.location.countryOrRegion;
+      const country = newH && newH.country;
       const history = newH.history;
       this.current = newH.current;
       const labels = [];
@@ -743,6 +847,7 @@ export default {
                 parser: timeFormat,
                 displayFormats: {
                   day: "ddd MMM D",
+                  hour: "ddd MMM D",
                 }, // round: 'day'
                 tooltipFormat: "ddd ll",
               },
@@ -766,8 +871,9 @@ export default {
           pconf3: "new %|perc|",
           active: "sick actual|log1|total",
           recovered: "recovered|log1|total",
-          tdeaths: "died|log2|/day",
+          critical: "critical|log2|/day",
           treco3: "recovered|log2|/day",
+          tdeaths: "died|log2|/day",
         };
         const naxes = {};
         let posit = false;
@@ -831,7 +937,8 @@ export default {
 
   mounted() {
     //    console.log("Mounted:", this.$t);
-    /*     axios(
+    /*     
+    axios(
       "https://coronavirus-monitor.p.rapidapi.com/coronavirus/cases_by_particular_country.php?country=Austria",
       {
         method: "GET",
@@ -843,13 +950,12 @@ export default {
       }
     )
       .then(
-        (response) => console.log((this.tmp = response.data)),
+        (response) => this.wait(10, (this.tmp = response.data)),
         (err) => console.log(err)
       )
       .then((_) => {
-      console.log("second");
         return axios(
-          "https://coronavirus-monitor.p.rapidapi.com/coronavirus/history_by_particular_country_by_date.php?country=Austria&date=2020-04-09",
+          "https://coronavirus-monitor.p.rapidapi.com/coronavirus/latest_stat_by_country.php?country=Austria",
           {
             method: "GET",
             headers: {
@@ -858,25 +964,118 @@ export default {
                 "f15ec2b43amshcdf31a3383ec09dp1c4144jsn44f08110d1c8",
             },
           }
-        ).then(
-          (response) => console.log((this.tmp1 = response.data)),
-          (err) => console.log(err)
-        );
+        )
+          .then(
+            (response) => this.wait(10, (this.tmp1 = response.data)),
+            (err) => console.log(err)
+          )
+          .then((_) =>
+            axios("https://covid-193.p.rapidapi.com/history?country=austria", {
+              method: "GET",
+              headers: {
+                "x-rapidapi-host": "covid-193.p.rapidapi.com",
+                "x-rapidapi-key":
+                  "f15ec2b43amshcdf31a3383ec09dp1c4144jsn44f08110d1c8",
+              },
+            })
+              .then((response) => {
+                console.log((this.tmp2 = response.data));
+              })
+              .catch((err) => {
+                console.log(err);
+              })
+          );
       });
  */
     this.$i18n.locale = this.myLang;
-    this.countries.map((i) => (this.countryIndex[i.alpha2Code] = i));
-    this.activeCountry = { CountryCode: "AT", CountryName: "Austria" };
-    this.selected = this.countryCodes.filter(
-      (i) =>
-        "AT, CH, DE, BE, CN, DK, FI, FR, IT, NL, NO, ES, PT, SE, GB, US"
-          .split(", ")
-          .indexOf(i.CountryCode) >= 0
-    );
-    this.$nextTick().then((_) => this.$forceUpdate());
+    //   this.activeCountry = this.countryIndex["AT"];
   },
 
-  created() {},
+  created() {
+    this.countries.map((i) => (this.countryIndex[i.alpha2Code] = i));
+    let mcountries = this.countries;
+    return axios(
+      "https://coronavirus-monitor.p.rapidapi.com/coronavirus/affected.php",
+      {
+        method: "GET",
+        headers: {
+          "x-rapidapi-host": "coronavirus-monitor.p.rapidapi.com",
+          "x-rapidapi-key":
+            "f15ec2b43amshcdf31a3383ec09dp1c4144jsn44f08110d1c8",
+        },
+      }
+    )
+      .then(
+        (response) => {
+          const data = response.data;
+          this.aCountries = data.affected_countries;
+          const nfound = [];
+          const res = [];
+          for (const c of data.affected_countries) {
+            let found = false;
+            for (const cc of mcountries) {
+              if (
+                c == cc.name ||
+                c == cc.aname ||
+                c == cc.alpha3Code ||
+                cc.altSpellings.indexOf(c) >= 0
+              ) {
+                cc.aname = c;
+                found = true;
+                res.push(cc);
+                break;
+              }
+            }
+            if (!found) nfound.push(c);
+          }
+          //          mcountries = res;
+          this.aCountries = nfound;
+        },
+        (err) => console.log(err)
+      )
+      .then((_) =>
+        axios("https://covid-193.p.rapidapi.com/countries", {
+          method: "GET",
+          headers: {
+            "x-rapidapi-host": "covid-193.p.rapidapi.com",
+            "x-rapidapi-key":
+              "f15ec2b43amshcdf31a3383ec09dp1c4144jsn44f08110d1c8",
+          },
+        })
+          .then((response) => {
+            const c2 = response.data.response;
+            const nfound = [];
+            const res = [];
+            for (const cx of c2) {
+              let found = false;
+              const c = cx.replace(/-/g, " ").trim();
+              for (const cc of mcountries) {
+                if (
+                  c == cc.name ||
+                  c == cc.aname ||
+                  cx == (cc.bname && cc.bname.trim()) ||
+                  c == cc.bname ||
+                  c == cc.alpha3Code ||
+                  cc.altSpellings.indexOf(c) >= 0
+                ) {
+                  cc.bname = cx;
+                  found = true;
+                  res.push(cc);
+                  break;
+                }
+              }
+              if (!found) nfound.push(cx);
+            }
+            this.countries = res;
+            this.aCountries = nfound;
+            this.wait(10).then(() => (this.gotCountries = true));
+            //            console.log("countries2", res);
+          })
+          .catch((err) => {
+            console.log(err);
+          })
+      );
+  },
 };
 </script>
 <style scoped.vue>

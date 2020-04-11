@@ -818,6 +818,7 @@
     },
     {
         "name": "The Bahamas",
+        "aname": "Bahamas",
         "topLevelDomain": [
             ".bs"
         ],
@@ -1384,6 +1385,7 @@
     },
     {
         "name": "Bonaire",
+        "aname": "Caribbean Netherlands",
         "topLevelDomain": [
             ".an",
             ".nl"
@@ -1733,6 +1735,7 @@
     },
     {
         "name": "Virgin Islands (British)",
+        "aname": "British Virgin Islands",
         "topLevelDomain": [
             ".vg"
         ],
@@ -1778,6 +1781,7 @@
     },
     {
         "name": "Virgin Islands (U.S.)",
+        "bname": "US-Virgin-Islands",
         "topLevelDomain": [
             ".vi"
         ],
@@ -2192,6 +2196,7 @@
     },
     {
         "name": "Cape Verde",
+        "aname": "Cabo Verde",
         "topLevelDomain": [
             ".cv"
         ],
@@ -2284,6 +2289,7 @@
     },
     {
         "name": "Central African Republic",
+        "aname": "CAR",
         "topLevelDomain": [
             ".cf"
         ],
@@ -2711,6 +2717,7 @@
     },
     {
         "name": "Republic of the Congo",
+        "aname": "Congo",
         "topLevelDomain": [
             ".cg"
         ],
@@ -3025,6 +3032,7 @@
     },
     {
         "name": "Curaçao",
+        "bname": "Cura&ccedil;ao",
         "topLevelDomain": [
             ".cw"
         ],
@@ -3131,6 +3139,7 @@
     },
     {
         "name": "Czech Republic",
+        "aname": "Czechia",
         "topLevelDomain": [
             ".cz"
         ],
@@ -3805,6 +3814,7 @@
     },
     {
         "name": "Faroe Islands",
+        "aname": "Faeroe Islands",
         "topLevelDomain": [
             ".fo"
         ],
@@ -4221,6 +4231,7 @@
     },
     {
         "name": "The Gambia",
+        "aname": "Gambia",
         "topLevelDomain": [
             ".gm"
         ],
@@ -4867,6 +4878,7 @@
     },
     {
         "name": "Guinea-Bissau",
+        "bname": "Guinea-Bissau",
         "topLevelDomain": [
             ".gw"
         ],
@@ -5065,6 +5077,7 @@
     },
     {
         "name": "Holy See",
+        "aname": "Vatican City",
         "topLevelDomain": [
             ".va"
         ],
@@ -5593,6 +5606,7 @@
     },
     {
         "name": "Republic of Ireland",
+        "aname": "Ireland",
         "topLevelDomain": [
             ".ie"
         ],
@@ -5892,6 +5906,7 @@
     },
     {
         "name": "Jersey",
+        "aname": "Channel Islands",
         "topLevelDomain": [
             ".je"
         ],
@@ -6732,6 +6747,7 @@
     },
     {
         "name": "Macau",
+        "aname": "Macao",
         "topLevelDomain": [
             ".mo"
         ],
@@ -6784,6 +6800,7 @@
     },
     {
         "name": "Republic of Macedonia",
+        "aname": "North Macedonia",
         "topLevelDomain": [
             ".mk"
         ],
@@ -9200,6 +9217,7 @@
     },
     {
         "name": "Puerto Rico",
+        "bname": "Puerto-Rico",
         "topLevelDomain": [
             ".pr"
         ],
@@ -9350,6 +9368,7 @@
     },
     {
         "name": "Réunion",
+        "bname": "R&eacute;union",
         "topLevelDomain": [
             ".re"
         ],
@@ -9577,6 +9596,8 @@
     },
     {
         "name": "Saint Barthélemy",
+        "aname": "St. Barth",
+        "bname": "St-Barth",
         "topLevelDomain": [
             ".bl"
         ],
@@ -9815,6 +9836,7 @@
     },
     {
         "name": "Saint Pierre and Miquelon",
+        "aname": "Saint Pierre Miquelon",
         "topLevelDomain": [
             ".pm"
         ],
@@ -9861,6 +9883,8 @@
     },
     {
         "name": "Saint Vincent and the Grenadines",
+        "aname": "St. Vincent Grenadines",
+        "bname": "St-Vincent-Grenadines",
         "topLevelDomain": [
             ".vc"
         ],
@@ -10003,6 +10027,7 @@
     },
     {
         "name": "São Tomé and Príncipe",
+        "aname": "Sao Tome and Principe",
         "topLevelDomain": [
             ".st"
         ],
@@ -10727,6 +10752,8 @@
     },
     {
         "name": "South Korea",
+        "aname": "S. Korea",
+        "bname":"S-Korea",
         "topLevelDomain": [
             ".kr"
         ],
@@ -11087,6 +11114,7 @@
     },
     {
         "name": "Swaziland",
+        "aname": "Eswatini",
         "topLevelDomain": [
             ".sz"
         ],
@@ -11520,6 +11548,8 @@
     },
     {
         "name": "East Timor",
+        "aname": "Timor-Leste",
+        "bname": "Timor-Leste",
         "topLevelDomain": [
             ".tl"
         ],
@@ -11918,6 +11948,7 @@
     },
     {
         "name": "Turks and Caicos Islands",
+        "aname": "Turks and Caicos",
         "topLevelDomain": [
             ".tc"
         ],
@@ -12274,7 +12305,7 @@
             "en"
         ],
         "translations": {
-            "de": "USA",
+            "de": "Vereinigte Staaten",
             "es": "Estados Unidos",
             "fr": "États-Unis",
             "ja": "アメリカ合衆国",
