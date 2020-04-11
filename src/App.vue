@@ -84,7 +84,7 @@
         :items-per-page="100"
         must-sort
         fixed-header
-        :sort-by="['sickPerMillion']"
+        :sort-by.sync="sortBy"
       >
         <template v-slot:item="{ item, headers }">
           <tr
@@ -141,8 +141,8 @@
         }}, Population:&nbsp;{{ current.population | nformat("?;") }},
         Sick/Million:&nbsp;{{
           ((current.confirmed * 1000000) / current.population) | nformat("?3;")
-        }}, Sick%Tested:&nbsp;{{
-          ((current.confirmed * 100.0) / current.tests) | nformat("?3;")
+        }}, Sick/Tested:&nbsp;{{
+          ((current.confirmed * 100.0) / current.tests) | nformat("?3;%")
         }},
       </div>
       <v-divider class="my-1" />
@@ -221,6 +221,7 @@ export default {
       ccountry: null,
       current: { confirmed: 0 },
       selected: [],
+      sortBy: ["sickPerMillion"],
       gotCountries: false,
       expanded: 0,
       mprops: {
@@ -749,7 +750,7 @@ export default {
     gotCountries() {
       this.selected = this.countryCodes.filter(
         (i) =>
-//          "AT, DE"
+          //          "AT, DE"
           "AT, CH, DE, BE, CN, DK, FI, FR, IT, NL, NO, ES, PT, SE, GB, US"
             .split(",")
             .map((i) => i.trim())
