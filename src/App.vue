@@ -315,7 +315,7 @@ export default {
           format: "?1;",
         },
         {
-          text: "new/ (rec+deadths)",
+          text: "new/ (rec+dead)",
           align: "end",
           sortable: true,
           value: "confrate",
