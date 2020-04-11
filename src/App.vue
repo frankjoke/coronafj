@@ -35,6 +35,26 @@
     </v-app-bar>
 
     <v-content class="flex-wrap">
+      <v-chip-group :value="selected" multiple mandatory column class="ma-3">
+        <v-chip
+          v-for="item in selected"
+          :key="item.CountryCode"
+          small
+          @click.stop.prevent="setCountry(item.CountryCode)"
+          ><v-avatar left>
+            <v-img
+              v-if="item && item.CountryCode"
+              :src="
+                'https://www.countryflags.io/' +
+                item.CountryCode +
+                '/flat/64.png'
+              "
+            ></v-img>
+          </v-avatar>
+          <strong>{{ item.CountryCode }}</strong
+          >&nbsp; <span>({{ item.alt }})</span></v-chip
+        >
+      </v-chip-group>
       <v-combobox
         class="pa-2"
         v-model="selected"
@@ -42,20 +62,21 @@
         :hint="selectedShort.join(', ')"
         item-text="CountryName"
         item-value="CountryCode"
-        small-chips
         persistent-hint
+        :search-input.sync="csearch"
         label="Select countries for list:"
         multiple
         prepend-icon="mdi-filter-outline"
         outlined
+        return-object
         :filter="filterItem"
-        :menu-props="mprops"
       >
-        <template v-slot:selection="{ attrs, item }">
-          <v-chip
+        <template v-slot:selection=""
+          ><!--           <v-chip
             v-bind="attrs"
             close
-            @click.stop="setCountry(item.CountryCode, $event)"
+            @cclick="select"
+            @click.stop.prevent="setCountry(item.CountryCode, null)"
             @click:close="remove(item)"
             small
             ><v-avatar left>
@@ -72,7 +93,8 @@
             >&nbsp;
             <span>({{ item.alt }})</span>
           </v-chip>
-        </template>
+ --></template
+        >
       </v-combobox>
       <v-divider class="my-1" />
       <v-data-table
@@ -89,7 +111,7 @@
         <template v-slot:item="{ item, headers }">
           <tr
             class="alternate"
-            @click.stop="setCountry(item.alpha2Code, $event)"
+            @click.stop.prevent="setCountry(item.alpha2Code)"
           >
             <td
               class="px-1"
@@ -108,7 +130,7 @@
           </tr>
         </template>
       </v-data-table>
-      <v-divider class="my-1" />
+      <v-divider class="my-1" ref="focus" />
       <div class="subtitle-2" style="display: flex;">
         <v-img
           v-if="ccountry && ccountry.alpha2Code"
@@ -219,20 +241,11 @@ export default {
       countries: countries,
       countryIndex: {},
       ccountry: null,
+      csearch: null,
       current: { confirmed: 0 },
       selected: [],
       sortBy: ["sickPerMillion"],
-      gotCountries: false,
       expanded: 0,
-      mprops: {
-        auto: true,
-        overflowY: true,
-        maxHeight: 300,
-        closeOnClick: false,
-        closeOnContentClick: true,
-        openOnClick: false,
-        disabled: false,
-      },
       histList: [],
       // tmp: {},
       // tmp1: {},
@@ -416,9 +429,10 @@ export default {
     },
   },
   methods: {
-    setCountry(item, event) {
-      event.stopPropagation();
+    setCountry(item) {
       //      this.mprops.disabled = true;
+      // console.log(item, select && select(), this);
+      // this.$refs.focus.$el.click()
       this.activeCountry = this.countryCodes.filter(
         (i) => i.CountryCode == item
       )[0];
@@ -755,20 +769,6 @@ export default {
     },
   },
   watch: {
-    gotCountries() {
-      this.selected = this.countryCodes.filter(
-        (i) =>
-          //          "AT, DE"
-          "AT, CH, DE, BE, CN, DK, FI, FR, IT, NL, NO, ES, PT, SE, GB, US"
-            .split(",")
-            .map((i) => i.trim())
-            .indexOf(i.CountryCode) >= 0
-      );
-      this.$nextTick().then((_) =>
-        this.$forceUpdate((this.activeCountry = this.selected[0]))
-      );
-    },
-
     selectedShort(newC) {
       //      const list = [];
       this.histList = [];
@@ -1077,7 +1077,19 @@ export default {
             }
             this.countries = res;
             this.aCountries = nfound;
-            this.wait(10).then(() => (this.gotCountries = true));
+            this.wait(10).then(() => {
+              this.selected = this.countryCodes.filter(
+                (i) =>
+                  //                  "AT, DE"
+                  "AT, CH, DE, BE, CN, DK, FI, FR, IT, NL, NO, ES, PT, SE, GB, US"
+                    .split(",")
+                    .map((i) => i.trim())
+                    .indexOf(i.CountryCode) >= 0
+              );
+              this.$nextTick().then((_) =>
+                this.$forceUpdate((this.activeCountry = this.selected[0]))
+              );
+            });
             //            console.log("countries2", res);
           })
           .catch((err) => {
