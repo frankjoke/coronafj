@@ -280,11 +280,18 @@ export default {
           format: "?2;",
         },
         {
-          text: "Tests%",
+          text: "Tests/M",
           align: "end",
           sortable: true,
           value: "mtests",
-          format: "?3;",
+          format: "?;",
+        },
+        {
+          text: "sick/Tested%",
+          align: "end",
+          sortable: true,
+          value: "stests",
+          format: "?2;",
         },
         {
           text: "Deaths%",
@@ -394,7 +401,7 @@ export default {
         options.decimalPoint = mylang == "en" ? "." : ",";
       }
       val = Number(val);
-      val = isNaN(val) ? "NaN" : val.toFixed(places).toString();
+      val = isNaN(val) ? "" : val.toFixed(places).toString();
       if (options.decimalPoint) val = val.replace(".", options.decimalPoint);
       if (options.sepThousands) {
         const del = options.decimalPoint === "," ? "." : ",";
@@ -477,7 +484,8 @@ export default {
         const item = history[i];
         // calculate all new values
         //        item.active = item.confirmed - item.deaths - item.recovered;
-        item.mtests = (item.tests * 100.0) / country.population;
+        item.mtests = (item.tests * 1000000.0) / country.population;
+        if (item.tests) item.stests = (item.confirmed * 100.0) / item.tests;
         item.pcritical = (item.critical * 100.0) / item.active;
         item.tconf = item.confirmed - (i > 0 ? history[i - 1].confirmed : 0);
         item.tconf3 = sq3m(item, "tconf", i, 4);
