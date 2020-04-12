@@ -279,6 +279,13 @@ export default {
           format: "?2;",
         },
         {
+          text: "Critical%",
+          align: "end",
+          sortable: true,
+          value: "pcritical",
+          format: "?2;",
+        },
+        {
           text: "Deaths/M",
           align: "end",
           sortable: true,
@@ -286,10 +293,10 @@ export default {
           format: "?1;",
         },
         {
-          text: "Critical%",
+          text: "Deaths%",
           align: "end",
           sortable: true,
-          value: "pcritical",
+          value: "deathRate",
           format: "?2;",
         },
         {
@@ -307,13 +314,6 @@ export default {
           format: "?2;",
         },
         {
-          text: "Deaths%",
-          align: "end",
-          sortable: true,
-          value: "deathRate",
-          format: "?2;",
-        },
-        {
           text: "New%",
           align: "end",
           sortable: true,
@@ -321,17 +321,17 @@ export default {
           format: "?2;",
         },
         {
-          text: "Double in",
-          align: "end",
-          sortable: true,
-          value: "double3",
-          format: "?1;",
-        },
-        {
           text: "new/ (rec+dead)",
           align: "end",
           sortable: true,
           value: "confrate",
+          format: "?1;",
+        },
+        {
+          text: "Double in",
+          align: "end",
+          sortable: true,
+          value: "double3",
           format: "?1;",
         },
         {
@@ -526,8 +526,8 @@ export default {
       let last = { confirmed: 0 };
       if (history && history.length) {
         last = JSON.parse(JSON.stringify(history[history.length - 1]));
-        last.deathRate = (100.0 * last.deaths) / last.active;
-        last.recovRate = (100.0 * last.recovered) / last.active;
+        last.deathRate = (100.0 * last.deaths) / last.confirmed;
+        last.recovRate = (100.0 * last.recovered) / last.confirmed;
         last.confrate = (100.0 * last.tconf3) / (last.treco3 + last.tdeaths3);
         last.double1 = last.double1;
         last.double3 = last.double3;
