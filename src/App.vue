@@ -141,7 +141,10 @@
             '/flat/64.png'
           "
         ></v-img
-        ><span class="ml-1">{{ ccountry && ccountry.alt }}:</span>
+        ><span class="ml-1"
+          >{{ ccountry && ccountry.alpha2Code }} /
+          {{ ccountry && ccountry.alt }}:</span
+        >
       </div>
       <div class="body-2">
         Total cases:&nbsp;{{ current.confirmed | nformat("?;") }}, Total
@@ -775,10 +778,10 @@ export default {
         this.selectedShort = newC.map((i) => i.CountryCode);
         newC = newC.map((i) => i.CountryCode);
         oldC = oldC.map((i) => i.CountryCode);
-//        console.log(newC, oldC, this.selectedShort);
+        //        console.log(newC, oldC, this.selectedShort);
         while (newC.length && oldC.length && newC[0] == oldC[0])
           newC.shift(oldC.shift());
-//        console.log(newC, oldC, this.selectedShort);
+        //        console.log(newC, oldC, this.selectedShort);
         if (newC.length != 1 || oldC.length != 0) {
           newC = this.selectedShort;
           this.histList = [];
