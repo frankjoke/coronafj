@@ -40,7 +40,9 @@
           v-for="item in selected"
           :key="item.CountryCode"
           small
+          close
           @click.stop.prevent="setCountry(item.CountryCode)"
+          @click:close="remove(item)"
           ><v-avatar left>
             <v-img
               v-if="item && item.CountryCode"
@@ -67,7 +69,6 @@
         label="Select countries for list:"
         multiple
         prepend-icon="mdi-filter-outline"
-        outlined
         return-object
         :filter="filterItem"
       >
@@ -77,7 +78,6 @@
             close
             @cclick="select"
             @click.stop.prevent="setCountry(item.CountryCode, null)"
-            @click:close="remove(item)"
             small
             ><v-avatar left>
               <v-img
@@ -246,6 +246,7 @@ export default {
       selected: [],
       sortBy: ["sickPerMillion"],
       expanded: 0,
+      selectedShort: [],
       histList: [],
       // tmp: {},
       // tmp1: {},
@@ -764,32 +765,48 @@ export default {
           return 0;
         });
     },
-    selectedShort() {
-      return this.selected.map((i) => i.CountryCode);
-    },
   },
   watch: {
-    selectedShort(newC) {
-      //      const list = [];
-      this.histList = [];
-      this.chart = false;
-      return this.wait(30).then((_) =>
-        this.pSequence(
-          newC,
-          (code) =>
-            this.getCountry(code).then((i) =>
-              i
-                ? this.histList.push(Object.assign({}, i.country, i.current))
-                : null
-            ),
-          10
-        ).then((_) => {
-          //          this.histList = list;
-          return this.wait(10).then((_) =>
-            this.$forceUpdate((this.chart = true))
-          );
-        })
-      );
+    selected(newC, oldC) {
+      const newcf = newC.filter((i) => typeof i === "object");
+      if (newcf.length != newC.length) {
+        this.wait(10).then((_) => (this.selected = newcf));
+      } else {
+        this.selectedShort = newC.map((i) => i.CountryCode);
+        newC = newC.map((i) => i.CountryCode);
+        oldC = oldC.map((i) => i.CountryCode);
+//        console.log(newC, oldC, this.selectedShort);
+        while (newC.length && oldC.length && newC[0] == oldC[0])
+          newC.shift(oldC.shift());
+//        console.log(newC, oldC, this.selectedShort);
+        if (newC.length != 1 || oldC.length != 0) {
+          newC = this.selectedShort;
+          this.histList = [];
+        }
+        this.chart = false;
+        return this.wait(10).then((_) =>
+          this.pSequence(
+            newC,
+            (code) =>
+              this.getCountry(code).then((i) =>
+                i
+                  ? this.histList.push(Object.assign({}, i.country, i.current))
+                  : null
+              ),
+            10
+          ).then((_) => {
+            //          this.histList = list;
+            return this.wait(10).then((_) => {
+              this.chart = true;
+              if (newC.length == 1 && oldC.length == 0)
+                this.activeCountry = this.countryCodes.filter(
+                  (i) => i.CountryCode == newC[0]
+                )[0];
+              this.$forceUpdate();
+            });
+          })
+        );
+      }
     },
 
     activeCountry(newC) {
