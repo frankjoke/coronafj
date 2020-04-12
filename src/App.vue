@@ -13,25 +13,7 @@
         <span>Private Corona App (v{{ version() }}) @fj</span>
       </div>
 
-      <!-- 
       <v-spacer></v-spacer>
-      <v-btn text @click="show = 'chart'">
-        Chart
-        <v-icon right>mdi-chart-line</v-icon>
-      </v-btn>
-      <v-btn text @click="show = 'list'">
-        List
-        <v-icon right>mdi-view-list</v-icon>
-      </v-btn>
-      <v-btn
-        href="https://info.gesundheitsministerium.at/"
-        target="_blank"
-        text
-      >
-         <span class="mr-2">Original Page from Ministry</span>
-        <v-icon>mdi-open-in-new</v-icon>
-      </v-btn>
-      -->
     </v-app-bar>
 
     <v-content class="flex-wrap">
@@ -73,26 +55,7 @@
         :filter="filterItem"
       >
         <template v-slot:selection=""
-          ><!--           <v-chip
-            v-bind="attrs"
-            close
-            @cclick="select"
-            @click.stop.prevent="setCountry(item.CountryCode, null)"
-            small
-            ><v-avatar left>
-              <v-img
-                v-if="item && item.CountryCode"
-                :src="
-                  'https://www.countryflags.io/' +
-                  item.CountryCode +
-                  '/flat/64.png'
-                "
-              ></v-img>
-            </v-avatar>
-            <strong>{{ item.CountryCode }}</strong
-            >&nbsp;
-            <span>({{ item.alt }})</span>
-          </v-chip>
+          ><!--  remove chips from combobox because they are handles separately!
  --></template
         >
       </v-combobox>
@@ -180,32 +143,6 @@
         :update-config="{ duration: 500, easing: 'easeInOutCirc' }"
         type="line"
       />
-
-      <!--       
-      <div class="body-2">
-        Total confirmed: {{ current.confirmed | nformat("?;") }}, Total
-        recovered: {{ current.recovered | nformat("?;") }}, Total deaths:
-        {{ current.deaths | nformat("?;") }},
-        <br />
-        Total cases: {{ current.totalSick | nformat("?;") }}, Recovery rate:
-        {{ current.recovRate | nformat("?2;%") }}, Death rate:
-        {{ current.deathRate | nformat("?2;%") }}, Death/Million:
-        {{ current.deathPerMillion | nformat("?2;") }},
-        <br />
-        Double in days last:
-        {{ current.double1 | nformat("?2;") }} average3:
-        {{ current.double3 | nformat("?2;") }}, New rate last:
-        {{ current.pconf | nformat("?2;%") }} average3:
-        {{ current.pconf3 | nformat("?2;%") }},
-        <br />
-        New to recovered+death rate average3:
-        {{ current.confrate | nformat("?1;%") }}, Population:
-        {{ current.population | nformat("?;") }}, Sick/Million:
-        {{
-          ((current.confirmed * 1000000) / current.population) | nformat("?3;")
-        }}
-      </div>
-      -->
     </v-content>
   </v-app>
 </template>

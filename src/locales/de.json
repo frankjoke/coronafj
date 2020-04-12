@@ -1,9 +1,3 @@
 {
-  "DeathMillion": "Todesfälle pro Million",
-  "hello": "Hallo!",
-  "message": "hallo i18n !!",
-  "what": {
-    "then": "Was wird dann gemacht?"
-  },
-  "whatever": ""
+  "DeathMillion": "Todesfälle pro Million"
 }

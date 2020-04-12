@@ -13,9 +13,9 @@ module.exports = {
     },
   },
   productionSourceMap: false,
-  publicPath: '.',
-  outputDir: 'docs',
+  publicPath: ".",
+  outputDir: "docs",
   css: {
-    extract: false
+    extract: false,
   },
 };
