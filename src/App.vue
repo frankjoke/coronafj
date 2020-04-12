@@ -48,7 +48,7 @@
         item-value="CountryCode"
         persistent-hint
         :search-input.sync="csearch"
-        label="Select countries for list:"
+        :label="$t('Select countries for list:')"
         multiple
         prepend-icon="mdi-filter-outline"
         return-object
@@ -1038,7 +1038,8 @@ export default {
               this.selected = this.countryCodes.filter(
                 (i) =>
                   //                  "AT, DE"
-                  "AT, CH, DE, BE, CN, DK, FI, FR, IT, NL, NO, ES, PT, SE, GB, US"
+                  //                  "AT, CH, DE, BE, CN, DK, FI, FR, IT, NL, NO, ES, PT, SE, GB, US"
+                  "AT, BE, CH, CN, DE, DK, ES, FI, FR, GB, IT, NL, NO, PT, SE, US"
                     .split(",")
                     .map((i) => i.trim())
                     .indexOf(i.CountryCode) >= 0
