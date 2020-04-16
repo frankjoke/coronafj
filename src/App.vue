@@ -554,18 +554,25 @@ export default {
       }
       return res;
     },
-
-    proxyAxios(url, always) {
-      return axios({
-        method: "get",
-        url:
-          process.env.IS_ELECTRON && !always
-            ? url
-            : "http://cors-anywhere.herokuapp.com/" + url,
-        headers: { "Access-Control-Allow-Origin": true },
-      });
-    },
 */
+    async proxyAxios(url, options, always) {
+      options = options || {};
+      options = Object.assign(
+        {
+          method: "get",
+          url:
+            process.env.IS_ELECTRON && !always
+              ? url
+              : "http://cors-anywhere.herokuapp.com/" + url,
+        },
+        options
+      );
+      if (!options.headers) options.headers = {};
+      options.headers["Access-Control-Allow-Origin"] = true;
+
+      return axios(options);
+    },
+
     async getCountry(code) {
       function makeRec(i) {
         const rec = {
@@ -617,6 +624,7 @@ export default {
               {
                 headers: {
                   "Subscription-Key": "3009d4ccc29e4808af1ccc25c69b4d5d",
+                  "Access-Control-Allow-Origin": true,
                 },
               }
             );
