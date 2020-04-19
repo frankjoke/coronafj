@@ -206,10 +206,17 @@ export default {
         //   format: "?2;",
         // },
         {
-          text: "Sick/M",
+          text: "sick/M",
           align: "end",
           sortable: true,
           value: "sickPerMillion",
+          format: "?1;",
+        },
+        {
+          text: "infected/M",
+          align: "end",
+          sortable: true,
+          value: "infectedPerMillion",
           format: "?1;",
         },
         {
@@ -283,10 +290,17 @@ export default {
           format: "?;",
         },
         {
+          text: "Recovered/%Sick",
+          align: "end",
+          sortable: true,
+          value: "treco2",
+          format: "?2;",
+        },
+        {
           text: "Sick",
           align: "end",
           sortable: true,
-          value: "confirmed",
+          value: "active",
           format: "?;",
         },
         {
@@ -444,11 +458,13 @@ export default {
         item.pcritical = (item.critical * 100.0) / item.active;
         item.tconf = item.confirmed - (i > 0 ? history[i - 1].confirmed : 0);
         item.tconf3 = sq3m(item, "tconf", i, 4);
-        item.tdeaths = item.deaths - (i > 0 ? history[i - 1].deaths : 0);
+        item.tdeaths = item.deaths - (i > 0 ? history[i - 1].deaths : item.tdeaths || 0);
         item.tdeaths3 = sq3m(item, "tdeaths", i, 4);
         item.treco = item.recovered - (i > 0 ? history[i - 1].recovered : 0);
         item.treco3 = sq3m(item, "treco", i, 4);
+        item.treco1 = (item.treco * 100.0) / item.active;
         item.pconf = (item.active && (100.0 * item.tconf) / item.active) || 0;
+        item.treco2 = sq3m(item, "treco1", i, 4);
         item.pconf3 = sq3m(item, "pconf", i, 4);
         if (item.pconf3 > 60) item.pconf3 = null;
         let c =
@@ -475,7 +491,8 @@ export default {
         last.pconf = last.pconf;
         last.pconf3 = last.pconf3;
         last.population = country.population;
-        last.sickPerMillion = (last.confirmed * 1000000) / country.population;
+        last.infectedPerMillion = (last.confirmed * 1000000) / country.population;
+        last.sickPerMillion = (last.active * 1000000) / country.population;
         last.deathPerMillion = (last.deaths * 1000000) / country.population;
       }
       return last;
@@ -578,7 +595,7 @@ export default {
         const rec = {
           date: i.day,
           deaths: i.deaths.total,
-          tdeasths: Number(i.deaths.new),
+          tdeaths: Number(i.deaths.new),
           confirmed: i.cases.total,
           recovered: i.cases.recovered,
           critical: i.cases.critical,
