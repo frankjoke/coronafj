@@ -839,18 +839,18 @@ export default {
         const example = history[0];
         const series = [];
         const axes = {
-          tconf3: "new|log2|/day",
-          confirmed: "sick total|log1|total",
+          tconf3: "new|log1|number",
           double3: "toDouble|n5|days",
+          confirmed: "anytime infected|log1",
           pconf3: "new %|perc|",
-          active: "sick actual|log1|total",
-          recovered: "recovered|log1|total",
-          critical: "critical|log2|/day",
-          treco3: "recovered|log2|/day",
-          tdeaths: "died|log2|/day",
+          active: "sick actual|log1",
+          recovered: "recovered|log1",
+          critical: "critical|log1",
+          treco3: "recovered|log1",
+          tdeaths: "died|log1",
         };
         const naxes = {};
-        let posit = false;
+        let posit = true;
         const yAxes = [];
         for (const n of Object.keys(axes)) {
           const an = axes[n].split("|");
@@ -899,7 +899,8 @@ export default {
           const item = history[i];
           labels.push(new Date(item.date));
           let s = 0;
-          for (const n of Object.keys(axes)) series[s++].data.push(item[n]);
+          for (const n of Object.keys(axes))
+            series[s++].data.push(this.numberFormat(item[n], 2));
         }
         datasets = series;
         options.scales.yAxes = yAxes;
