@@ -14,6 +14,24 @@
       </div>
 
       <v-spacer></v-spacer>
+      <FjB
+        v-if="devMode"
+        label="Reload externally"
+        img="mdi-file-restore-outline"
+        text
+        dense
+        @click.stop="created((myCache = {}))"
+      ></FjB>
+      <fj-file-save-button
+        v-if="devMode"
+        label="Save Cache"
+        img="mdi-file-download-outline"
+        :content="myCache"
+        :opts="{ type: 'JSON', basename: 'myCache' }"
+        small
+        text
+        tooltip="Download cache JSON or shift-click to copy to clipboard"
+      />
     </v-app-bar>
 
     <v-content class="flex-wrap">
@@ -28,11 +46,7 @@
           ><v-avatar left>
             <v-img
               v-if="item && item.CountryCode"
-              :src="
-                'https://www.countryflags.io/' +
-                item.CountryCode +
-                '/flat/64.png'
-              "
+              :src="flagLink(item.CountryCode)"
             ></v-img>
           </v-avatar>
           <strong>{{ item.CountryCode }}</strong
@@ -98,11 +112,7 @@
         <v-img
           v-if="ccountry && ccountry.alpha2Code"
           max-width="24"
-          :src="
-            'https://www.countryflags.io/' +
-            ccountry.alpha2Code +
-            '/flat/64.png'
-          "
+          :src="flagLink(ccountry.alpha2Code)"
         ></v-img
         ><span class="ml-1"
           >{{ ccountry && ccountry.alpha2Code }} /
@@ -137,12 +147,29 @@
       <vue-chart
         class="pa-1"
         v-if="chart"
-        style="position: relative; height: 40vh; width: 100%;"
+        style="position: relative; height: 35vh; width: 100%;"
         :data="timeData"
         :options="timeOptions"
         :update-config="{ duration: 500, easing: 'easeInOutCirc' }"
         type="line"
       />
+            <v-chip-group :value="selected" multiple mandatory column class="ma-3">
+        <v-chip
+          v-for="item in selected"
+          :key="item.CountryCode"
+          small
+          @click.stop.prevent="setCountry(item.CountryCode)"
+          ><v-avatar left>
+            <v-img
+              v-if="item && item.CountryCode"
+              :src="flagLink(item.CountryCode)"
+            ></v-img>
+          </v-avatar>
+          <strong>{{ item.CountryCode }}</strong
+          >({{ item.alt }})</v-chip
+        >
+      </v-chip-group>
+
     </v-content>
   </v-app>
 </template>
@@ -151,9 +178,11 @@
 import axios from "axios";
 import countries from "./assets/countries.json";
 import packagej from "../package.json";
+import FjFileSaveButton from "./components/FjFileSaveButton.vue";
+import FjB from "./components/FjB.vue";
 
 const mylang = (navigator.language || navigator.userLanguage).slice(0, 2);
-const myCache = {};
+const devMode = process.env.NODE_ENV == "development";
 /*
 function fix(number, digits, min, max) {
   min = min || Number.NEGATIVE_INFINITY;
@@ -166,9 +195,14 @@ function fix(number, digits, min, max) {
 // import Hello from './components/Hello';
 export default {
   name: "App",
+  components: {
+    FjFileSaveButton,
+    FjB,
+  },
   data: () => {
     return {
       //      myData: myData,
+      myCache: {},
       chart: false,
       histAt: null,
       timeData: null,
@@ -206,21 +240,21 @@ export default {
         //   format: "?2;",
         // },
         {
-          text: "sick/M",
+          text: "sick /M",
           align: "end",
           sortable: true,
           value: "sickPerMillion",
           format: "?1;",
         },
         {
-          text: "infected/M",
+          text: "infected /M",
           align: "end",
           sortable: true,
           value: "infectedPerMillion",
           format: "?1;",
         },
         {
-          text: "Recovered%",
+          text: "Recov%",
           align: "end",
           sortable: true,
           value: "recovRate",
@@ -234,7 +268,7 @@ export default {
           format: "?2;",
         },
         {
-          text: "Deaths/M",
+          text: "Deaths /M",
           align: "end",
           sortable: true,
           value: "deathPerMillion",
@@ -248,14 +282,14 @@ export default {
           format: "?2;",
         },
         {
-          text: "Tests/M",
+          text: "Tests /M",
           align: "end",
           sortable: true,
           value: "mtests",
           format: "?;",
         },
         {
-          text: "sick/Tested%",
+          text: "sick /Tested%",
           align: "end",
           sortable: true,
           value: "stests",
@@ -283,14 +317,14 @@ export default {
           format: "?1;",
         },
         {
-          text: "Recovered/day",
+          text: "Recov /day",
           align: "end",
           sortable: true,
           value: "treco3",
           format: "?;",
         },
         {
-          text: "Recovered/%Sick",
+          text: "Recov /%Sick",
           align: "end",
           sortable: true,
           value: "treco2",
@@ -384,6 +418,18 @@ export default {
     },
   },
   methods: {
+    flagLink(cc) {
+      return `https://www.countryflags.io/${cc}/flat/64.png`;
+    },
+    async myAxios(url, options) {
+      if (this.myCache[url]) return this.myCache[url];
+      options = options || { method: "GET" };
+      if (!options.method) options.method = "GET";
+      if (devMode) console.log(`Will load '${url}'.`);
+      const res = await axios(url, options);
+      this.myCache[url] = res.data;
+      return res.data;
+    },
     setCountry(item) {
       //      this.mprops.disabled = true;
       // console.log(item, select && select(), this);
@@ -451,14 +497,28 @@ export default {
         history.shift();
       for (let i = 0; i < history.length; i++) {
         const item = history[i];
+        if (!item.confirmed && i) item.confirmed = history[i - 1].confirmed;
+        if (
+          i &&
+          i < history.length - 1 &&
+          ((item.confirmed > history[i + 1].confirmed &&
+            item.confirmed > history[i - 1].confirmed) ||
+            (item.confirmed < history[i + 1].confirmed &&
+              item.confirmed < history[i - 1].confirmed))
+        )
+          item.confirmed = Math.floor(
+            (history[i - 1].confirmed + history[i + 1].confirmed) / 2.0
+          );
         // calculate all new values
         //        item.active = item.confirmed - item.deaths - item.recovered;
         item.mtests = (item.tests * 1000000.0) / country.population;
         if (item.tests) item.stests = (item.confirmed * 100.0) / item.tests;
         item.pcritical = (item.critical * 100.0) / item.active;
-        item.tconf = item.confirmed - (i > 0 ? history[i - 1].confirmed : 0);
+        item.tconf =
+          item.confirmed - (i > 0 ? history[i - 1].confirmed : item.confirmed);
         item.tconf3 = sq3m(item, "tconf", i, 4);
-        item.tdeaths = item.deaths - (i > 0 ? history[i - 1].deaths : item.tdeaths || 0);
+        item.tdeaths =
+          item.deaths - (i > 0 ? history[i - 1].deaths : item.tdeaths || 0);
         item.tdeaths3 = sq3m(item, "tdeaths", i, 4);
         item.treco = item.recovered - (i > 0 ? history[i - 1].recovered : 0);
         item.treco3 = sq3m(item, "treco", i, 4);
@@ -470,10 +530,17 @@ export default {
         let c =
           i < 2
             ? 0
-            : Math.log2(2) /
-              (Math.log2(item.confirmed) - Math.log2(history[i - 2].confirmed));
-        if (c == Infinity) c = item.y ? Math.log2(e.y) : 0;
-        item.double1 = c;
+            : 1.0 /
+              Math.abs(
+                Math.log2(item.confirmed) - Math.log2(history[i - 2].confirmed)
+              );
+        if (
+          i &&
+          c != Infinity &&
+          ((c > 500 && c > 20 * history[i - 1].double1) || c > 10000)
+        )
+          c = history[i - 1].double1;
+        item.double1 = c == Infinity ? 0 : c;
         item.double3 = sq3m(item, "double1", i, 3);
       }
       return history;
@@ -491,7 +558,8 @@ export default {
         last.pconf = last.pconf;
         last.pconf3 = last.pconf3;
         last.population = country.population;
-        last.infectedPerMillion = (last.confirmed * 1000000) / country.population;
+        last.infectedPerMillion =
+          (last.confirmed * 1000000) / country.population;
         last.sickPerMillion = (last.active * 1000000) / country.population;
         last.deathPerMillion = (last.deaths * 1000000) / country.population;
       }
@@ -574,20 +642,21 @@ export default {
 */
     async proxyAxios(url, options, always) {
       options = options || {};
+      url =
+        process.env.IS_ELECTRON && !always
+          ? url
+          : "http://cors-anywhere.herokuapp.com/" + url;
+
       options = Object.assign(
         {
-          method: "get",
-          url:
-            process.env.IS_ELECTRON && !always
-              ? url
-              : "http://cors-anywhere.herokuapp.com/" + url,
+          method: "GET",
         },
         options
       );
       if (!options.headers) options.headers = {};
       options.headers["Access-Control-Allow-Origin"] = true;
 
-      return axios(options);
+      return myAxios(url, options);
     },
 
     async getCountry(code) {
@@ -605,14 +674,13 @@ export default {
         if (i.tests.total) rec.tests = i.tests.total;
         return rec;
       }
-      if (myCache[code]) return myCache[code];
       const country = this.countryIndex[code] && this.countryIndex[code].bname;
       const chist = [];
       if (!country)
         return console.log("Error: Cannot load history data for:", code), null;
       let res = null;
       try {
-        res = await axios(
+        res = await this.myAxios(
           "https://covid-193.p.rapidapi.com/history?country=" + country,
           {
             method: "GET",
@@ -623,7 +691,6 @@ export default {
             },
           }
         );
-        res = res.data;
         res.country = this.countryIndex[code];
         const hist = res.response;
         let day = "";
@@ -636,7 +703,7 @@ export default {
         if (day > "2020-02-22") {
           let ret = null;
           try {
-            ret = await axios.get(
+            ret = await this.myAxios(
               "https://api.smartable.ai/coronavirus/stats/" + code,
               {
                 headers: {
@@ -645,7 +712,7 @@ export default {
                 },
               }
             );
-            ret = ret.data.stats.history;
+            ret = ret.stats.history;
             //            console.log(ret);
             for (let i = ret.length; i > 0; --i) {
               const f = ret[i - 1];
@@ -665,7 +732,6 @@ export default {
       //      console.log(chist);
       res.history = this.calcHistory(chist, res.country);
       res.current = this.calcLast(res.history, res.country);
-      myCache[code] = res;
       return res;
     },
 
@@ -698,6 +764,9 @@ export default {
   },
 
   computed: {
+    devMode() {
+      return devMode;
+    },
     countryCodes() {
       return this.countries
         .map((c) => {
@@ -928,65 +997,15 @@ export default {
   },
 
   mounted() {
-    //    console.log("Mounted:", this.$t);
-    /*     
-    axios(
-      "https://coronavirus-monitor.p.rapidapi.com/coronavirus/cases_by_particular_country.php?country=Austria",
-      {
-        method: "GET",
-        headers: {
-          "x-rapidapi-host": "coronavirus-monitor.p.rapidapi.com",
-          "x-rapidapi-key":
-            "f15ec2b43amshcdf31a3383ec09dp1c4144jsn44f08110d1c8",
-        },
-      }
-    )
-      .then(
-        (response) => this.wait(10, (this.tmp = response.data)),
-        (err) => console.log(err)
-      )
-      .then((_) => {
-        return axios(
-          "https://coronavirus-monitor.p.rapidapi.com/coronavirus/latest_stat_by_country.php?country=Austria",
-          {
-            method: "GET",
-            headers: {
-              "x-rapidapi-host": "coronavirus-monitor.p.rapidapi.com",
-              "x-rapidapi-key":
-                "f15ec2b43amshcdf31a3383ec09dp1c4144jsn44f08110d1c8",
-            },
-          }
-        )
-          .then(
-            (response) => this.wait(10, (this.tmp1 = response.data)),
-            (err) => console.log(err)
-          )
-          .then((_) =>
-            axios("https://covid-193.p.rapidapi.com/history?country=austria", {
-              method: "GET",
-              headers: {
-                "x-rapidapi-host": "covid-193.p.rapidapi.com",
-                "x-rapidapi-key":
-                  "f15ec2b43amshcdf31a3383ec09dp1c4144jsn44f08110d1c8",
-              },
-            })
-              .then((response) => {
-                console.log((this.tmp2 = response.data));
-              })
-              .catch((err) => {
-                console.log(err);
-              })
-          );
-      });
- */
     this.$i18n.locale = this.myLang;
-    //   this.activeCountry = this.countryIndex["AT"];
   },
 
-  created() {
+  async created() {
+    const mc = devMode ? await import("../myCache.json") : {};
+    this.myCache = Object.assign({}, mc.default);
     this.countries.map((i) => (this.countryIndex[i.alpha2Code] = i));
     let mcountries = this.countries;
-    return axios(
+    return this.myAxios(
       "https://coronavirus-monitor.p.rapidapi.com/coronavirus/affected.php",
       {
         method: "GET",
@@ -999,7 +1018,7 @@ export default {
     )
       .then(
         (response) => {
-          const data = response.data;
+          const data = response;
           this.aCountries = data.affected_countries;
           const nfound = [];
           const res = [];
@@ -1026,7 +1045,7 @@ export default {
         (err) => console.log(err)
       )
       .then((_) =>
-        axios("https://covid-193.p.rapidapi.com/countries", {
+        this.myAxios("https://covid-193.p.rapidapi.com/countries", {
           method: "GET",
           headers: {
             "x-rapidapi-host": "covid-193.p.rapidapi.com",
@@ -1035,7 +1054,7 @@ export default {
           },
         })
           .then((response) => {
-            const c2 = response.data.response;
+            const c2 = response.response;
             const nfound = [];
             const res = [];
             for (const cx of c2) {
@@ -1063,9 +1082,9 @@ export default {
             this.wait(10).then(() => {
               this.selected = this.countryCodes.filter(
                 (i) =>
-                  //                  "AT, DE"
+                  // "AT, FR"
                   //                  "AT, CH, DE, BE, CN, DK, FI, FR, IT, NL, NO, ES, PT, SE, GB, US"
-                  "AT, BE, CH, CN, DE, DK, ES, FI, FR, GB, IT, NL, NO, PT, SE, US"
+                  "AT, BE, BG, CA, CH, CN, CZ, DE, DK, ES, FI, FR, GB, HU, IE, IT, NL, NO, PL, PT, RO, RU, SE, SI, SK, TR, US"
                     .split(",")
                     .map((i) => i.trim())
                     .indexOf(i.CountryCode) >= 0
