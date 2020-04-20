@@ -12,7 +12,14 @@
         />
         <span>Private Corona App (v{{ version() }}) @fj</span>
       </div>
-
+      <span class="title px-8" v-if="loading"
+        >Please wait until data is loaded!</span
+      >
+      <v-progress-circular
+        v-if="loading"
+        indeterminate
+        color="pink darken-4"
+      ></v-progress-circular>
       <v-spacer></v-spacer>
       <FjB
         v-if="devMode"
@@ -153,7 +160,7 @@
         :update-config="{ duration: 500, easing: 'easeInOutCirc' }"
         type="line"
       />
-            <v-chip-group :value="selected" multiple mandatory column class="ma-3">
+      <v-chip-group :value="selected" multiple mandatory column class="ma-3">
         <v-chip
           v-for="item in selected"
           :key="item.CountryCode"
@@ -169,7 +176,6 @@
           >({{ item.alt }})</v-chip
         >
       </v-chip-group>
-
     </v-content>
   </v-app>
 </template>
@@ -202,6 +208,7 @@ export default {
   data: () => {
     return {
       //      myData: myData,
+      loading: true,
       myCache: {},
       chart: false,
       histAt: null,
@@ -837,7 +844,7 @@ export default {
                   (i) => i.CountryCode == newC[0]
                 )[0];
               this.$forceUpdate();
-            });
+            }).then((_) => (this.loading = false));
           })
         );
       }
