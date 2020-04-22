@@ -27,7 +27,7 @@
         img="mdi-file-restore-outline"
         text
         dense
-        @click.stop="created((myCache = {}))"
+        @click.stop="myCreated((myCache = {}))"
       ></FjB>
       <fj-file-save-button
         v-if="devMode"
@@ -331,6 +331,13 @@ export default {
           format: "?;",
         },
         {
+          text: "Recov /M",
+          align: "end",
+          sortable: true,
+          value: "trecod3",
+          format: "?1;",
+        },
+        {
           text: "Recov /%Sick",
           align: "end",
           sortable: true,
@@ -529,6 +536,9 @@ export default {
         item.tdeaths3 = sq3m(item, "tdeaths", i, 4);
         item.treco = item.recovered - (i > 0 ? history[i - 1].recovered : 0);
         item.treco3 = sq3m(item, "treco", i, 4);
+        item.trecod = item.recovered - (i > 0 ? history[i - 1].recovered : 0);
+        item.trecod3 = sq3m(item, "treco", i, 4);
+        item.treco = (item.recovered * 1000000.0) / country.population;
         item.treco1 = (item.treco * 100.0) / item.active;
         item.pconf = (item.active && (100.0 * item.tconf) / item.active) || 0;
         item.treco2 = sq3m(item, "treco1", i, 4);
@@ -666,6 +676,96 @@ export default {
       return myAxios(url, options);
     },
 
+    async myCreated() {
+      this.countries.map((i) => (this.countryIndex[i.alpha2Code] = i));
+      let mcountries = this.countries;
+      const data = await this.myAxios(
+        "https://coronavirus-monitor.p.rapidapi.com/coronavirus/affected.php",
+        {
+          method: "GET",
+          headers: {
+            "x-rapidapi-host": "coronavirus-monitor.p.rapidapi.com",
+            "x-rapidapi-key":
+              "f15ec2b43amshcdf31a3383ec09dp1c4144jsn44f08110d1c8",
+          },
+        }
+      ).catch(
+        (err) => (console.log("could not load affected countries:", err), {})
+      );
+      this.aCountries = data.affected_countries;
+      let nfound = [];
+      let res = [];
+      for (const c of data.affected_countries) {
+        let found = false;
+        for (const cc of mcountries) {
+          if (
+            c == cc.name ||
+            c == cc.aname ||
+            c == cc.alpha3Code ||
+            cc.altSpellings.indexOf(c) >= 0
+          ) {
+            cc.aname = c;
+            found = true;
+            res.push(cc);
+            break;
+          }
+        }
+        if (!found) nfound.push(c);
+      }
+      //          mcountries = res;
+      this.aCountries = nfound;
+
+      const response = await this.myAxios(
+        "https://covid-193.p.rapidapi.com/countries",
+        {
+          method: "GET",
+          headers: {
+            "x-rapidapi-host": "covid-193.p.rapidapi.com",
+            "x-rapidapi-key":
+              "f15ec2b43amshcdf31a3383ec09dp1c4144jsn44f08110d1c8",
+          },
+        }
+      ).catch((err) => console.log(err));
+      const c2 = response.response;
+      nfound = [];
+      res = [];
+      for (const cx of c2) {
+        let found = false;
+        const c = cx.replace(/-/g, " ").trim();
+        for (const cc of mcountries) {
+          if (
+            c == cc.name ||
+            c == cc.aname ||
+            cx == (cc.bname && cc.bname.trim()) ||
+            c == cc.bname ||
+            c == cc.alpha3Code ||
+            cc.altSpellings.indexOf(c) >= 0
+          ) {
+            cc.bname = cx;
+            found = true;
+            res.push(cc);
+            break;
+          }
+        }
+        if (!found) nfound.push(cx);
+      }
+      this.countries = res;
+      this.aCountries = nfound;
+      await this.wait(10);
+      this.selected = this.countryCodes.filter(
+        (i) =>
+          // "AT, FR"
+          //                  "AT, CH, DE, BE, CN, DK, FI, FR, IT, NL, NO, ES, PT, SE, GB, US"
+          "AT, BE, BG, CA, CH, CN, CZ, DE, DK, ES, FI, FR, GB, HU, IE, IT, NL, NO, PL, PT, RO, RU, SE, SI, SK, TR, US"
+            .split(",")
+            .map((i) => i.trim())
+            .indexOf(i.CountryCode) >= 0
+      );
+      await this.$nextTick();
+      this.$forceUpdate((this.activeCountry = this.selected[0]));
+      //            console.log("countries2", res);
+    },
+
     async getCountry(code) {
       function makeRec(i) {
         const rec = {
@@ -742,31 +842,29 @@ export default {
       return res;
     },
 
-    wait(time) {
-      var timer;
-      const that = this;
-      return new Promise((res) => {
-        if (!time || time < 0 || typeof time !== "number")
-          return that.$nextTick(res);
-        timer = setTimeout((_) => {
-          timer = null;
-          return res();
-        }, time);
-      });
+    async wait(time, arg) {
+      time = Number(time) || 0;
+      if (isNaN(time) || time < 0) time = 0;
+      return await new Promise((resolve) =>
+        setTimeout(() => resolve(arg), time)
+      );
     },
 
-    pSequence(arr, promise, wait) {
+    async pSequence(arr, promise, wait) {
       wait = wait || 0;
       if (!Array.isArray(arr) && typeof arr === "object")
         arr = Object.entries(arr);
       const res = [];
-      const myPromise = (key) =>
-        this.wait(wait).then((_) =>
-          promise(key).then((r) => res[res.push(r) - 1])
-        );
-      return arr
-        .reduce((p, x) => p.then((_) => myPromise(x)), Promise.resolve())
-        .then((_) => res);
+      for (let i in arr) {
+        if (i) await this.wait(wait);
+        try {
+          const r = await promise(arr[i]);
+          res.push(r);
+        } catch (e) {
+          res.push(null);
+        }
+      }
+      return res;
     },
   },
 
@@ -837,14 +935,16 @@ export default {
             10
           ).then((_) => {
             //          this.histList = list;
-            return this.wait(10).then((_) => {
-              this.chart = true;
-              if (newC.length == 1 && oldC.length == 0)
-                this.activeCountry = this.countryCodes.filter(
-                  (i) => i.CountryCode == newC[0]
-                )[0];
-              this.$forceUpdate();
-            }).then((_) => (this.loading = false));
+            return this.wait(10)
+              .then((_) => {
+                this.chart = true;
+                if (newC.length == 1 && oldC.length == 0)
+                  this.activeCountry = this.countryCodes.filter(
+                    (i) => i.CountryCode == newC[0]
+                  )[0];
+                this.$forceUpdate();
+              })
+              .then((_) => (this.loading = false));
           })
         );
       }
@@ -890,6 +990,8 @@ export default {
         "#5D4037",
         "#455A64",
         "#64DD17",
+        "#6A1B9A",
+        "#CDDC39",
       ];
 
       const country = newH && newH.country;
@@ -1008,104 +1110,14 @@ export default {
   },
 
   async created() {
-    const mc = devMode ? await import("../myCache.json") : {};
-    this.myCache = Object.assign({}, mc.default);
-    this.countries.map((i) => (this.countryIndex[i.alpha2Code] = i));
-    let mcountries = this.countries;
-    return this.myAxios(
-      "https://coronavirus-monitor.p.rapidapi.com/coronavirus/affected.php",
-      {
-        method: "GET",
-        headers: {
-          "x-rapidapi-host": "coronavirus-monitor.p.rapidapi.com",
-          "x-rapidapi-key":
-            "f15ec2b43amshcdf31a3383ec09dp1c4144jsn44f08110d1c8",
-        },
-      }
-    )
-      .then(
-        (response) => {
-          const data = response;
-          this.aCountries = data.affected_countries;
-          const nfound = [];
-          const res = [];
-          for (const c of data.affected_countries) {
-            let found = false;
-            for (const cc of mcountries) {
-              if (
-                c == cc.name ||
-                c == cc.aname ||
-                c == cc.alpha3Code ||
-                cc.altSpellings.indexOf(c) >= 0
-              ) {
-                cc.aname = c;
-                found = true;
-                res.push(cc);
-                break;
-              }
-            }
-            if (!found) nfound.push(c);
-          }
-          //          mcountries = res;
-          this.aCountries = nfound;
-        },
-        (err) => console.log(err)
-      )
-      .then((_) =>
-        this.myAxios("https://covid-193.p.rapidapi.com/countries", {
-          method: "GET",
-          headers: {
-            "x-rapidapi-host": "covid-193.p.rapidapi.com",
-            "x-rapidapi-key":
-              "f15ec2b43amshcdf31a3383ec09dp1c4144jsn44f08110d1c8",
-          },
-        })
-          .then((response) => {
-            const c2 = response.response;
-            const nfound = [];
-            const res = [];
-            for (const cx of c2) {
-              let found = false;
-              const c = cx.replace(/-/g, " ").trim();
-              for (const cc of mcountries) {
-                if (
-                  c == cc.name ||
-                  c == cc.aname ||
-                  cx == (cc.bname && cc.bname.trim()) ||
-                  c == cc.bname ||
-                  c == cc.alpha3Code ||
-                  cc.altSpellings.indexOf(c) >= 0
-                ) {
-                  cc.bname = cx;
-                  found = true;
-                  res.push(cc);
-                  break;
-                }
-              }
-              if (!found) nfound.push(cx);
-            }
-            this.countries = res;
-            this.aCountries = nfound;
-            this.wait(10).then(() => {
-              this.selected = this.countryCodes.filter(
-                (i) =>
-                  // "AT, FR"
-                  //                  "AT, CH, DE, BE, CN, DK, FI, FR, IT, NL, NO, ES, PT, SE, GB, US"
-                  "AT, BE, BG, CA, CH, CN, CZ, DE, DK, ES, FI, FR, GB, HU, IE, IT, NL, NO, PL, PT, RO, RU, SE, SI, SK, TR, US"
-                    .split(",")
-                    .map((i) => i.trim())
-                    .indexOf(i.CountryCode) >= 0
-              );
-              this.$nextTick().then((_) =>
-                this.$forceUpdate((this.activeCountry = this.selected[0]))
-              );
-            });
-            //            console.log("countries2", res);
-          })
-          .catch((err) => {
-            console.log(err);
-          })
-      );
+    try {
+      const mc = devMode ? await import("../myCache.json") : {};
+      this.myCache = Object.assign({}, mc.default);
+
+      await this.myCreated();
+    } catch (e) {
+      console.log("Error in creation:", e);
+    }
   },
 };
 </script>
