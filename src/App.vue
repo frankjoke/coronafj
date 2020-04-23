@@ -439,8 +439,8 @@ export default {
       if (this.myCache[url]) return this.myCache[url];
       options = options || { method: "GET" };
       if (!options.method) options.method = "GET";
-      //      if (!options.headers) options.headers = {};
-      //      options.headers["Access-Control-Allow-Origin"] = "*";
+      if (!options.headers) options.headers = {};
+      options.headers["Access-Control-Allow-Origin"] = "*";
       if (this.devMode) console.log(`Will load '${url}'.`);
       const res = await axios(
         url,
