@@ -438,8 +438,9 @@ export default {
     },
 
     async myAxios(url, options, always) {
-      if (this.myCache[url] && this.prefereCache) return this.myCache[url];
       options = options || { method: "GET" };
+      if (this.myCache[url] && (this.prefereCache || options.useCache)) 
+        return this.myCache[url];
       const addproxy = always || options.useProxy;
       if (!options.method) options.method = "GET";
       if (addproxy) {
@@ -449,9 +450,11 @@ export default {
       if (this.devMode) console.log(`Will load '${url}'.`);
       return axios(
         addproxy
-          ? (typeof options.useProxy == "string"
-              ? options.useProxy
-              : "https://cors.io/?") + url
+          ? typeof options.useProxy == "string"
+            ? options.useProxy
+            : (url.startsWith("https")
+                ? "https://cors-anywhere.herokuapp.com/"
+                : "http://cors-anywhere.herokuapp.com/") + url
           : url,
         options
       ).then(
@@ -460,7 +463,10 @@ export default {
           return res.data;
         },
         (e) => {
-          if (this.myCache[url]) return this.myCache[url];
+          if (this.myCache[url]) {
+            console.log(`Error (will take cache) on: ${url}:`, e);
+            return this.myCache[url];
+          }
           console.log(`Error not in cache and not from source: ${url}:`, e);
           return e;
         }
@@ -837,7 +843,7 @@ export default {
                 headers: {
                   "Subscription-Key": "3009d4ccc29e4808af1ccc25c69b4d5d",
                 },
-                useProxy: "http://cors-anywhere.herokuapp.com/",
+                useProxy: "https://cors-anywhere.herokuapp.com/",
               }
             );
             ret = ret.stats.history;
