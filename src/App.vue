@@ -435,12 +435,20 @@ export default {
     flagLink(cc) {
       return `https://www.countryflags.io/${cc}/flat/64.png`;
     },
-    async myAxios(url, options) {
+    async myAxios(url, options, always) {
       if (this.myCache[url]) return this.myCache[url];
       options = options || { method: "GET" };
       if (!options.method) options.method = "GET";
-      if (devMode) console.log(`Will load '${url}'.`);
-      const res = await axios(url, options);
+      //      if (!options.headers) options.headers = {};
+      //      options.headers["Access-Control-Allow-Origin"] = "*";
+      if (this.devMode) console.log(`Will load '${url}'.`);
+      const res = await axios(
+        url,
+        // options.useProxy || always
+        //   ? "http://cors-anywhere.herokuapp.com/" + url
+        //   : url,
+        options
+      );
       this.myCache[url] = res.data;
       return res.data;
     },
@@ -656,7 +664,6 @@ export default {
       }
       return res;
     },
-*/
     async proxyAxios(url, options, always) {
       options = options || {};
       url =
@@ -673,9 +680,9 @@ export default {
       if (!options.headers) options.headers = {};
       options.headers["Access-Control-Allow-Origin"] = true;
 
-      return myAxios(url, options);
+      return this.myAxios(url, options);
     },
-
+*/
     async myCreated() {
       this.countries.map((i) => (this.countryIndex[i.alpha2Code] = i));
       let mcountries = this.countries;
@@ -815,7 +822,6 @@ export default {
               {
                 headers: {
                   "Subscription-Key": "3009d4ccc29e4808af1ccc25c69b4d5d",
-                  "Access-Control-Allow-Origin": true,
                 },
               }
             );
@@ -870,7 +876,7 @@ export default {
 
   computed: {
     devMode() {
-      return devMode;
+      return devMode || true;
     },
     countryCodes() {
       return this.countries
@@ -1111,7 +1117,7 @@ export default {
 
   async created() {
     try {
-      const mc = devMode ? await import("../myCache.json") : {};
+      const mc = this.devMode ? await import("../myCache.json") : {};
       this.myCache = Object.assign({}, mc.default);
 
       await this.myCreated();

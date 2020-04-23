@@ -18,4 +18,6 @@ module.exports = {
   css: {
     extract: false,
   },
+  devServer: {
+  },
 };
