@@ -27,7 +27,7 @@
         img="mdi-file-restore-outline"
         text
         dense
-        @click.stop="myCreated((myCache = {}))"
+        @click.stop="myCreated((prefereCache = false))"
       ></FjB>
       <fj-file-save-button
         v-if="devMode"
@@ -208,6 +208,7 @@ export default {
   data: () => {
     return {
       //      myData: myData,
+      prefereCache: true,
       loading: true,
       myCache: {},
       chart: false,
@@ -435,22 +436,35 @@ export default {
     flagLink(cc) {
       return `https://www.countryflags.io/${cc}/flat/64.png`;
     },
+
     async myAxios(url, options, always) {
-      if (this.myCache[url]) return this.myCache[url];
+      if (this.myCache[url] && this.prefereCache) return this.myCache[url];
       options = options || { method: "GET" };
+      const addproxy = always || options.useProxy;
       if (!options.method) options.method = "GET";
-      if (!options.headers) options.headers = {};
-      options.headers["Access-Control-Allow-Origin"] = "*";
+      if (addproxy) {
+        if (!options.headers) options.headers = {};
+        options.headers["Access-Control-Allow-Origin"] = "*";
+      }
       if (this.devMode) console.log(`Will load '${url}'.`);
-      const res = await axios(
-        url,
-        // options.useProxy || always
-        //   ? "http://cors-anywhere.herokuapp.com/" + url
-        //   : url,
+      return axios(
+        addproxy
+          ? (typeof options.useProxy == "string"
+              ? options.useProxy
+              : "https://cors.io/?") + url
+          : url,
         options
+      ).then(
+        (res) => {
+          this.myCache[url] = res.data;
+          return res.data;
+        },
+        (e) => {
+          if (this.myCache[url]) return this.myCache[url];
+          console.log(`Error not in cache and not from source: ${url}:`, e);
+          return e;
+        }
       );
-      this.myCache[url] = res.data;
-      return res.data;
     },
     setCountry(item) {
       //      this.mprops.disabled = true;
@@ -823,6 +837,7 @@ export default {
                 headers: {
                   "Subscription-Key": "3009d4ccc29e4808af1ccc25c69b4d5d",
                 },
+                useProxy: "http://cors-anywhere.herokuapp.com/",
               }
             );
             ret = ret.stats.history;
@@ -950,7 +965,7 @@ export default {
                   )[0];
                 this.$forceUpdate();
               })
-              .then((_) => (this.loading = false));
+              .then((_) => (this.prefereCache = !(this.loading = false)));
           })
         );
       }
