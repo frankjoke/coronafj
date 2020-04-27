@@ -454,7 +454,7 @@ export default {
       try {
         const res = await axios(url, options);
         this.myCache[url] = res.data;
-        console.log(`Downloaded: ${url}:`);
+        if (this.devMode) console.log(`Downloaded: ${url}:`);
         return res.data;
       } catch (e) {
         if (addproxy)
@@ -467,14 +467,14 @@ export default {
                     : "http://cors-anywhere.herokuapp.com/") + url;
             const res = await axios(purl, options);
             this.myCache[url] = res.data;
-            console.log(`Downloaded with proxy: ${url}:`);
+            if (this.devMode) console.log(`Downloaded with proxy: ${url}:`);
             return res.data;
           } catch (e) {
-            console.log(`Error (with proxy) on: ${url}:`, e);
+            if (this.devMode) console.log(`Error (with proxy) on: ${url}:`, e);
           }
       }
       if (this.myCache[url]) {
-        console.log(`Error (with proxy) on: ${url}:`, e);
+        console.log(`Error , will use cache on: ${url}:`, e);
         return this.myCache[url];
       }
       console.log(`Error not in cache and not from source: ${url}:`, e);
