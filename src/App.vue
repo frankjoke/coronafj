@@ -468,7 +468,8 @@ export default {
             if (this.devMode()) console.log(`Downloaded with proxy: ${url}:`);
             return res.data;
           } catch (e) {
-            if (this.devMode()) console.log(`Error (with proxy) on: ${url}:`, e);
+            if (this.devMode())
+              console.log(`Error (with proxy) on: ${url}:`, e);
           }
       }
       if (this.myCache[url]) {
@@ -903,7 +904,7 @@ export default {
 
     devMode() {
       const dm = process.env.NODE_ENV !== "production";
-      console.log("devmode:", process.env)
+      //      console.log("devmode:", process.env)
       return dm;
     },
   },
