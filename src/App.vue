@@ -29,7 +29,7 @@
         @click.stop="myCreated((loading = !(prefereCache = false)))"
       ></FjB>
       <fj-file-save-button
-        v-if="devMode"
+        v-if="devMode()"
         label="Save Cache"
         img="mdi-file-download-outline"
         :content="myCache"
@@ -190,7 +190,6 @@ import FjFileSaveButton from "./components/FjFileSaveButton.vue";
 import FjB from "./components/FjB.vue";
 
 const mylang = (navigator.language || navigator.userLanguage).slice(0, 2);
-const devMode = process.env.NODE_ENV == "development";
 /*
 function fix(number, digits, min, max) {
   min = min || Number.NEGATIVE_INFINITY;
@@ -453,7 +452,7 @@ export default {
       try {
         const res = await axios(url, options);
         this.myCache[url] = res.data;
-        if (this.devMode) console.log(`Downloaded: ${url}:`);
+        if (this.devMode()) console.log(`Downloaded: ${url}:`);
         return res.data;
       } catch (e) {
         if (addproxy)
@@ -466,10 +465,10 @@ export default {
                     : "http://cors-anywhere.herokuapp.com/") + url;
             const res = await axios(purl, options);
             this.myCache[url] = res.data;
-            if (this.devMode) console.log(`Downloaded with proxy: ${url}:`);
+            if (this.devMode()) console.log(`Downloaded with proxy: ${url}:`);
             return res.data;
           } catch (e) {
-            if (this.devMode) console.log(`Error (with proxy) on: ${url}:`, e);
+            if (this.devMode()) console.log(`Error (with proxy) on: ${url}:`, e);
           }
       }
       if (this.myCache[url]) {
@@ -901,12 +900,15 @@ export default {
       }
       return res;
     },
+
+    devMode() {
+      const dm = process.env.NODE_ENV !== "production";
+      console.log("devmode:", process.env)
+      return dm;
+    },
   },
 
   computed: {
-    devMode() {
-      return devMode;
-    },
     countryCodes() {
       return this.countries
         .map((c) => {
@@ -1146,13 +1148,12 @@ export default {
 
   async created() {
     try {
-      const mc = this.devMode ? await import("../myCache.json") : {};
+      const mc = await import("../myCache.json");
       this.myCache = Object.assign({}, mc.default);
-
-      await this.myCreated();
     } catch (e) {
       console.log("Error in creation:", e);
     }
+    await this.myCreated();
   },
 };
 </script>
