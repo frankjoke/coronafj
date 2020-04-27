@@ -27,7 +27,7 @@
         img="mdi-file-restore-outline"
         text
         dense
-        @click.stop="myCreated((prefereCache = false))"
+        @click.stop="myCreated((loading = !(prefereCache = false)))"
       ></FjB>
       <fj-file-save-button
         v-if="devMode"
@@ -50,15 +50,17 @@
           close
           @click.stop.prevent="setCountry(item.CountryCode)"
           @click:close="remove(item)"
-          ><v-avatar left>
+        >
+          <v-avatar left>
             <v-img
               v-if="item && item.CountryCode"
               :src="flagLink(item.CountryCode)"
             ></v-img>
           </v-avatar>
           <strong>{{ item.CountryCode }}</strong
-          >&nbsp; <span>({{ item.alt }})</span></v-chip
-        >
+          >&nbsp;
+          <span>({{ item.alt }})</span>
+        </v-chip>
       </v-chip-group>
       <v-combobox
         class="pa-2"
@@ -75,10 +77,10 @@
         return-object
         :filter="filterItem"
       >
-        <template v-slot:selection=""
-          ><!--  remove chips from combobox because they are handles separately!
- --></template
-        >
+        <template v-slot:selection>
+          <!--  remove chips from combobox because they are handles separately!
+          -->
+        </template>
       </v-combobox>
       <v-divider class="my-1" />
       <v-data-table
@@ -120,11 +122,11 @@
           v-if="ccountry && ccountry.alpha2Code"
           max-width="24"
           :src="flagLink(ccountry.alpha2Code)"
-        ></v-img
-        ><span class="ml-1"
-          >{{ ccountry && ccountry.alpha2Code }} /
-          {{ ccountry && ccountry.alt }}:</span
-        >
+        ></v-img>
+        <span class="ml-1">
+          {{ ccountry && ccountry.alpha2Code }} /
+          {{ ccountry && ccountry.alt }}:
+        </span>
       </div>
       <div class="body-2">
         Total cases:&nbsp;{{ current.confirmed | nformat("?;") }}, Total
@@ -166,15 +168,16 @@
           :key="item.CountryCode"
           small
           @click.stop.prevent="setCountry(item.CountryCode)"
-          ><v-avatar left>
+        >
+          <v-avatar left>
             <v-img
               v-if="item && item.CountryCode"
               :src="flagLink(item.CountryCode)"
             ></v-img>
           </v-avatar>
-          <strong>{{ item.CountryCode }}</strong
-          >({{ item.alt }})</v-chip
-        >
+          <strong>{{ item.CountryCode }}</strong>
+          ({{ item.alt }})
+        </v-chip>
       </v-chip-group>
     </v-content>
   </v-app>
@@ -439,7 +442,7 @@ export default {
 
     async myAxios(url, options, always) {
       options = options || { method: "GET" };
-      if (this.myCache[url] && (this.prefereCache || options.useCache)) 
+      if (this.myCache[url] && (this.prefereCache || options.useCache))
         return this.myCache[url];
       const addproxy = always || options.useProxy;
       if (!options.method) options.method = "GET";
@@ -448,30 +451,36 @@ export default {
         options.headers["Access-Control-Allow-Origin"] = "*";
       }
       if (this.devMode) console.log(`Will load '${url}'.`);
-      return axios(
-        addproxy
-          ? typeof options.useProxy == "string"
-            ? options.useProxy
-            : (url.startsWith("https")
-                ? "https://cors-anywhere.herokuapp.com/"
-                : "http://cors-anywhere.herokuapp.com/") + url
-          : url,
-        options
-      ).then(
-        (res) => {
-          this.myCache[url] = res.data;
-          return res.data;
-        },
-        (e) => {
-          if (this.myCache[url]) {
-            console.log(`Error (will take cache) on: ${url}:`, e);
-            return this.myCache[url];
+      try {
+        const res = await axios(url, options);
+        this.myCache[url] = res.data;
+        console.log(`Downloaded: ${url}:`);
+        return res.data;
+      } catch (e) {
+        if (addproxy)
+          try {
+            const purl =
+              options.useProxy == "string"
+                ? options.useProxy
+                : (url.startsWith("https")
+                    ? "https://cors-anywhere.herokuapp.com/"
+                    : "http://cors-anywhere.herokuapp.com/") + url;
+            const res = await axios(purl, options);
+            this.myCache[url] = res.data;
+            console.log(`Downloaded with proxy: ${url}:`);
+            return res.data;
+          } catch (e) {
+            console.log(`Error (with proxy) on: ${url}:`, e);
           }
-          console.log(`Error not in cache and not from source: ${url}:`, e);
-          return e;
-        }
-      );
+      }
+      if (this.myCache[url]) {
+        console.log(`Error (with proxy) on: ${url}:`, e);
+        return this.myCache[url];
+      }
+      console.log(`Error not in cache and not from source: ${url}:`, e);
+      return e;
     },
+
     setCountry(item) {
       //      this.mprops.disabled = true;
       // console.log(item, select && select(), this);
