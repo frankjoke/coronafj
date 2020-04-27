@@ -22,7 +22,6 @@
       ></v-progress-circular>
       <v-spacer></v-spacer>
       <FjB
-        v-if="devMode"
         label="Reload externally"
         img="mdi-file-restore-outline"
         text
@@ -906,7 +905,7 @@ export default {
 
   computed: {
     devMode() {
-      return devMode || true;
+      return devMode;
     },
     countryCodes() {
       return this.countries
