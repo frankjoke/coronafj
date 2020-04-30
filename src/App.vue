@@ -473,7 +473,7 @@ export default {
           }
       }
       if (this.myCache[url]) {
-        console.log(`Error , will use cache on: ${url}:`, e);
+        console.log(`Error , will use cache on: ${url}:`);
         return this.myCache[url];
       }
       console.log(`Error not in cache and not from source: ${url}:`, e);
