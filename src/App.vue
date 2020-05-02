@@ -434,6 +434,10 @@ export default {
     },
   },
   methods: {
+    storeMyCache(url, what) {
+      this.myCache[url] = what;
+      this.myCache.time = new Date();
+    },
     flagLink(cc) {
       return `https://www.countryflags.io/${cc}/flat/64.png`;
     },
@@ -451,7 +455,7 @@ export default {
       if (this.devMode) console.log(`Will load '${url}'.`);
       try {
         const res = await axios(url, options);
-        this.myCache[url] = res.data;
+        this.storeMyCache(url, res.data);
         if (this.devMode()) console.log(`Downloaded: ${url}:`);
         return res.data;
       } catch (e) {
@@ -464,7 +468,7 @@ export default {
                     ? "https://cors-anywhere.herokuapp.com/"
                     : "http://cors-anywhere.herokuapp.com/") + url;
             const res = await axios(purl, options);
-            this.myCache[url] = res.data;
+            this.storeMyCache(url, res.data);
             if (this.devMode()) console.log(`Downloaded with proxy: ${url}:`);
             return res.data;
           } catch (e) {
