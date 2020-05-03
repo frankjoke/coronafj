@@ -155,7 +155,7 @@
       <vue-chart
         class="pa-1"
         v-if="chart"
-        style="position: relative; height: 35vh; width: 100%;"
+        style="position: relative; height: 40vw; width: 100%;"
         :data="timeData"
         :options="timeOptions"
         :update-config="{ duration: 500, easing: 'easeInOutCirc' }"
