@@ -795,7 +795,7 @@ export default {
         (i) =>
           // "AT, FR"
           //                  "AT, CH, DE, BE, CN, DK, FI, FR, IT, NL, NO, ES, PT, SE, GB, US"
-          "AT, BE, BG, CA, CH, CN, CZ, DE, DK, ES, FI, FR, GB, HU, IE, IT, NL, NO, PL, PT, RO, RU, SE, SI, SK, TR, US"
+          "AT, BE, BG, CA, CH, CN, CZ, DE, DK, ES, FI, FR, GB, HU, HR, IE, IT, NL, NO, PL, PT, RO, RU, SE, SI, SK, TR, US"
             .split(",")
             .map((i) => i.trim())
             .indexOf(i.CountryCode) >= 0
